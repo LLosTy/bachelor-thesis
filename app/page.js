@@ -55,7 +55,7 @@ export default function TextInputComponent() {
         className="d-flex align-items-center gap-2 mb-3"
         style={{ maxWidth: "320px" }}
       >
-        <input
+        <textarea
           type="text"
           className="form-control"
           placeholder="Search cars (e.g., 'affordable cars')"
