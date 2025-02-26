@@ -65,7 +65,6 @@ export async function POST(request) {
         { role: "user", content: query },
       ],
     });
-    console.log("filter:", completion.choices[0].message.content);
 
     const filter = JSON.parse(completion.choices[0].message.content);
 

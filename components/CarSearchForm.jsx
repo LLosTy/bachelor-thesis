@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-export const CarSearchForm = ({ onSearch, loading }) => {
-  const [inputValue, setInputValue] = useState("");
+export const CarSearchForm = ({ onSearch, loading, initialValue = "" }) => {
+  const [inputValue, setInputValue] = useState(initialValue);
+
+  useEffect(() => {
+    setInputValue(initialValue);
+  }, [initialValue]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
