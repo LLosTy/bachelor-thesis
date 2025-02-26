@@ -1,4 +1,5 @@
 import "bootstrap/dist/css/bootstrap.min.css";
+import BootstrapClient from "@/components/BootstrapClient";
 
 export const metadata = {
   title: "Car Search Application",
@@ -8,7 +9,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <BootstrapClient />
+        {children}
+      </body>
     </html>
   );
 }
