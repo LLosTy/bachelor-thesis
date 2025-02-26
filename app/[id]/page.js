@@ -33,7 +33,6 @@ export default async function CarDetailPage({ params }) {
   if (!car) {
     notFound();
   }
-
   return (
     <div>
       <h1>
@@ -54,9 +53,9 @@ export default async function CarDetailPage({ params }) {
       {car.engine_specs && (
         <div>
           <h2>Engine Specifications</h2>
-          <p>Displacement: {car.engine_specs.displacement}cc</p>
-          <p>Horsepower: {car.engine_specs.horsepower}hp</p>
-          <p>Cylinders: {car.engine_specs.cylinders}</p>
+          <p>Displacement: {car.engine_specs[0].displacement}cc</p>
+          <p>Horsepower: {car.engine_specs[0].horsepower}hp</p>
+          <p>Cylinders: {car.engine_specs[0].cylinders}</p>
         </div>
       )}
 
