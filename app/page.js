@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { CarSearchForm } from "@/components/CarSearchForm";
 import { CarListings } from "@/components/CarListings";
 import { formatters } from "@/utils/formatters";
+import CookieConsent from "@/components/CookieConsent";
 
 export default function CarSearchApp() {
   const [carListings, setCarListings] = useState([]);
@@ -90,6 +91,7 @@ export default function CarSearchApp() {
           />
         </div>
       </div>
+      <CookieConsent />
     </div>
   );
 }
