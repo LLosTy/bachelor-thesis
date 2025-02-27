@@ -1,5 +1,6 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import BootstrapClient from "@/components/BootstrapClient";
+import CookieConsent from "@/components/CookieConsent";
 
 export const metadata = {
   title: "Car Search Application",
@@ -12,6 +13,7 @@ export default function RootLayout({ children }) {
       <body>
         <BootstrapClient />
         {children}
+        <CookieConsent />
       </body>
     </html>
   );
