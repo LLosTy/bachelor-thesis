@@ -26,9 +26,9 @@ async function getCarListing(id) {
     return null;
   }
 }
-
 export default async function CarDetailPage({ params }) {
-  const car = await getCarListing(params.id);
+  const { id } = await params;
+  const car = await getCarListing(id);
 
   if (!car) {
     notFound();
