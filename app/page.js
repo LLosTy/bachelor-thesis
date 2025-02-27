@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { CarSearchForm } from "@/components/CarSearchForm";
 import { CarListings } from "@/components/CarListings";
 import { formatters } from "@/utils/formatters";
+import { cookieUtils } from "@/utils/cookieUtils";
 
 export default function CarSearchApp() {
   const [carListings, setCarListings] = useState([]);
@@ -11,33 +12,37 @@ export default function CarSearchApp() {
 
   // Load cached results and last search query when component mounts
   useEffect(() => {
-    const cachedResults = localStorage.getItem("carSearchResults");
-    const savedQuery = localStorage.getItem("lastSearchQuery");
+    if (cookieUtils.canUseLocalStorage()) {
+      const cachedResults = localStorage.getItem("carSearchResults");
+      const savedQuery = localStorage.getItem("lastSearchQuery");
 
-    if (cachedResults) {
-      setCarListings(JSON.parse(cachedResults));
-    }
+      if (cachedResults) {
+        setCarListings(JSON.parse(cachedResults));
+      }
 
-    if (savedQuery) {
-      setLastSearchQuery(savedQuery);
+      if (savedQuery) {
+        setLastSearchQuery(savedQuery);
+      }
     }
   }, []);
 
   const handleSearch = async (query) => {
     setLoading(true);
     try {
-      // First check if we have cached results for this query
-      const cachedQuery = localStorage.getItem("lastSearchQuery");
-      const cachedResults = localStorage.getItem("carSearchResults");
+      // First check if we have cached results for this query and can use localStorage
+      if (cookieUtils.canUseLocalStorage()) {
+        const cachedQuery = localStorage.getItem("lastSearchQuery");
+        const cachedResults = localStorage.getItem("carSearchResults");
 
-      // If the query matches the cached query and we have results, use them
-      if (query === cachedQuery && cachedResults) {
-        setCarListings(JSON.parse(cachedResults));
-        setLoading(false);
-        return;
+        // If the query matches the cached query and we have results, use them
+        if (query === cachedQuery && cachedResults) {
+          setCarListings(JSON.parse(cachedResults));
+          setLoading(false);
+          return;
+        }
       }
 
-      // If no cache hit, make the API call
+      // If no cache hit or can't use localStorage, make the API call
       const response = await fetch("/api/cars", {
         method: "POST",
         headers: {
@@ -48,18 +53,22 @@ export default function CarSearchApp() {
 
       const data = await response.json();
       if (data.cars) {
-        // Cache the new results
-        localStorage.setItem("carSearchResults", JSON.stringify(data.cars));
-        localStorage.setItem("lastSearchQuery", query);
-        setLastSearchQuery(query);
+        // Only cache if we have permission
+        if (cookieUtils.canUseLocalStorage()) {
+          localStorage.setItem("carSearchResults", JSON.stringify(data.cars));
+          localStorage.setItem("lastSearchQuery", query);
+          setLastSearchQuery(query);
+        }
         setCarListings(data.cars);
       }
     } catch (error) {
       console.error("Error:", error);
-      // If there's an error, try to fall back to cached results
-      const cachedResults = localStorage.getItem("carSearchResults");
-      if (cachedResults) {
-        setCarListings(JSON.parse(cachedResults));
+      // If there's an error and we can use localStorage, try to fall back to cached results
+      if (cookieUtils.canUseLocalStorage()) {
+        const cachedResults = localStorage.getItem("carSearchResults");
+        if (cachedResults) {
+          setCarListings(JSON.parse(cachedResults));
+        }
       }
     }
     setLoading(false);
@@ -68,9 +77,11 @@ export default function CarSearchApp() {
   // Optional: Clear cache when component unmounts
   useEffect(() => {
     return () => {
-      // Uncomment if you want to clear cache on unmount
-      // localStorage.removeItem("carSearchResults");
-      // localStorage.removeItem("lastSearchQuery");
+      if (cookieUtils.canUseLocalStorage()) {
+        // Uncomment if you want to clear cache on unmount
+        // localStorage.removeItem("carSearchResults");
+        // localStorage.removeItem("lastSearchQuery");
+      }
     };
   }, []);
 
