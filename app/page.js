@@ -8,34 +8,52 @@ import { cookieUtils } from "@/utils/cookieUtils";
 export default function CarSearchApp() {
   const [carListings, setCarListings] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [lastSearchQuery, setLastSearchQuery] = useState("");
+  const [searchHistory, setSearchHistory] = useState([]);
 
-  // Load cached results and last search query when component mounts
+  // Load cached results and search history when component mounts
   useEffect(() => {
     if (cookieUtils.canUseLocalStorage()) {
       const cachedResults = localStorage.getItem("carSearchResults");
-      const savedQuery = localStorage.getItem("lastSearchQuery");
+      const savedHistory = localStorage.getItem("searchHistory");
 
       if (cachedResults) {
         setCarListings(JSON.parse(cachedResults));
       }
 
-      if (savedQuery) {
-        setLastSearchQuery(savedQuery);
+      if (savedHistory) {
+        setSearchHistory(JSON.parse(savedHistory));
       }
     }
   }, []);
+
+  // Helper function to update search history
+  const updateSearchHistory = (query) => {
+    // Create a new array to avoid direct state mutation
+    const newHistory = [
+      query,
+      ...searchHistory.filter((item) => item !== query),
+    ];
+
+    // Limit history to 10 items
+    const limitedHistory = newHistory.slice(0, 10);
+
+    // Update state and localStorage
+    setSearchHistory(limitedHistory);
+    if (cookieUtils.canUseLocalStorage()) {
+      localStorage.setItem("searchHistory", JSON.stringify(limitedHistory));
+    }
+  };
 
   const handleSearch = async (query) => {
     setLoading(true);
     try {
       // First check if we have cached results for this query and can use localStorage
       if (cookieUtils.canUseLocalStorage()) {
-        const cachedQuery = localStorage.getItem("lastSearchQuery");
+        const latestQuery = searchHistory.length > 0 ? searchHistory[0] : null;
         const cachedResults = localStorage.getItem("carSearchResults");
 
-        // If the query matches the cached query and we have results, use them
-        if (query === cachedQuery && cachedResults) {
+        // If the query matches the latest query and we have results, use them
+        if (query === latestQuery && cachedResults) {
           setCarListings(JSON.parse(cachedResults));
           setLoading(false);
           return;
@@ -56,8 +74,7 @@ export default function CarSearchApp() {
         // Only cache if we have permission
         if (cookieUtils.canUseLocalStorage()) {
           localStorage.setItem("carSearchResults", JSON.stringify(data.cars));
-          localStorage.setItem("lastSearchQuery", query);
-          setLastSearchQuery(query);
+          updateSearchHistory(query);
         }
         setCarListings(data.cars);
       }
@@ -80,7 +97,7 @@ export default function CarSearchApp() {
       if (cookieUtils.canUseLocalStorage()) {
         // Uncomment if you want to clear cache on unmount
         // localStorage.removeItem("carSearchResults");
-        // localStorage.removeItem("lastSearchQuery");
+        // localStorage.removeItem("searchHistory");
       }
     };
   }, []);
@@ -92,7 +109,8 @@ export default function CarSearchApp() {
           <CarSearchForm
             onSearch={handleSearch}
             loading={loading}
-            initialValue={lastSearchQuery}
+            initialValue={searchHistory.length > 0 ? searchHistory[0] : ""}
+            searchHistory={searchHistory}
           />
           <CarListings
             cars={carListings}
