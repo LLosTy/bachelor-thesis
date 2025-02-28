@@ -1,11 +1,10 @@
 // app/[id]/page.js
 import { notFound } from "next/navigation";
 
+const baseUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL;
+
 async function getCarListing(id) {
   try {
-    //Todo: add url from .env in the future
-    const baseUrl = "http://localhost:8055";
-
     // Fetch car listing with related engine specs and images
     const response = await fetch(
       `${baseUrl}/items/CarListings/${id}?fields=*,engine_specs.*,images.*`,
@@ -66,7 +65,7 @@ export default async function CarDetailPage({ params }) {
             // eslint-disable-next-line @next/next/no-img-element
             <img
               key={image.id}
-              src={`${process.env.NEXT_PUBLIC_DIRECTUS_URL}/assets/${image.thumbnail}`}
+              src={`${baseUrl}/assets/${image.thumbnail}`}
               alt={`${car.year} ${car.make} ${car.model}`}
             />
           ))}
@@ -79,7 +78,6 @@ export default async function CarDetailPage({ params }) {
 // Optional: Generate static params if you want to statically generate some pages
 export async function generateStaticParams() {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL;
     const response = await fetch(`${baseUrl}/items/CarListings`);
     const data = await response.json();
 
