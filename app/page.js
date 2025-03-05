@@ -4,6 +4,7 @@ import { CarSearchForm } from "@/components/CarSearchForm";
 import { CarListings } from "@/components/CarListings";
 import { formatters } from "@/utils/formatters";
 import { cookieUtils } from "@/utils/cookieUtils";
+import VehicleFilter from "@/components/VehicleFilter";
 
 export default function CarSearchApp() {
   const [carListings, setCarListings] = useState([]);
@@ -112,6 +113,8 @@ export default function CarSearchApp() {
             initialValue={searchHistory.length > 0 ? searchHistory[0] : ""}
             searchHistory={searchHistory}
           />
+          <VehicleFilter />
+
           <CarListings
             cars={carListings}
             formatPrice={formatters.formatPrice}
