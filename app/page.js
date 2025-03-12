@@ -47,6 +47,7 @@ export default function CarSearchApp() {
 
   const handleSearch = async (query) => {
     setLoading(true);
+
     try {
       // First check if we have cached results for this query and can use localStorage
       if (cookieUtils.canUseLocalStorage()) {
@@ -92,6 +93,16 @@ export default function CarSearchApp() {
     setLoading(false);
   };
 
+  // Handle filter-based search results
+  const handleFilterResults = (results) => {
+    setCarListings(results);
+
+    // Store results in localStorage if we can
+    if (cookieUtils.canUseLocalStorage()) {
+      localStorage.setItem("carSearchResults", JSON.stringify(results));
+    }
+  };
+
   // Optional: Clear cache when component unmounts
   useEffect(() => {
     return () => {
@@ -106,20 +117,25 @@ export default function CarSearchApp() {
   return (
     <div className="container-fluid bg-light min-vh-100 py-5">
       <div className="row justify-content-center">
-        <div className="col-md-8 col-lg-6">
+        <div className="col-md-10 col-lg-8">
+          {/* Natural language search */}
           <CarSearchForm
             onSearch={handleSearch}
             loading={loading}
             initialValue={searchHistory.length > 0 ? searchHistory[0] : ""}
-            searchHistory={searchHistory}
           />
-          <VehicleFilter />
 
-          <CarListings
-            cars={carListings}
-            formatPrice={formatters.formatPrice}
-            formatMileage={formatters.formatMileage}
-          />
+          {/* Results display */}
+          <div className="mt-4">
+            <CarListings
+              cars={carListings}
+              formatPrice={formatters.formatPrice}
+              formatMileage={formatters.formatMileage}
+            />
+          </div>
+
+          {/* Advanced filter component (floating button and offcanvas) */}
+          <VehicleFilter onFilterResults={handleFilterResults} />
         </div>
       </div>
     </div>

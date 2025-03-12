@@ -1,60 +1,158 @@
+"use client";
 import React, { useState, useEffect } from "react";
+import {
+  fetchMakes,
+  fetchModelsByMake,
+  fetchYears,
+  fetchEngineTypes,
+  getPriceRangeOptions,
+  searchCars,
+} from "../services/carApiService";
 
-const CarFilterComponent = () => {
+const VehicleFilter = ({ onFilterResults }) => {
+  // Filter state
   const [filters, setFilters] = useState({
     make: "",
     model: "",
     year: "",
     price: "",
     mileageFrom: "",
-    mileageTo: 150000,
+    mileageTo: "",
     engineType: "",
   });
 
+  // Data state
+  const [makes, setMakes] = useState([]);
   const [models, setModels] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [years, setYears] = useState([]);
+  const [engineTypes, setEngineTypes] = useState([]);
+  const [priceRanges] = useState(getPriceRangeOptions());
 
-  // Sample data - replace with actual API calls
-  const makes = ["Škoda", "Volkswagen", "Toyota", "BMW", "Audi", "Mercedes"];
-  const years = Array.from(
-    { length: 30 },
-    (_, i) => new Date().getFullYear() - i
-  );
-  const engineTypes = ["Gasoline", "Diesel", "Electric", "Hybrid", "LPG"];
+  // UI state
+  const [loading, setLoading] = useState({
+    makes: false,
+    models: false,
+    years: false,
+    engineTypes: false,
+    search: false,
+  });
+  const [error, setError] = useState({
+    makes: null,
+    models: null,
+    years: null,
+    engineTypes: null,
+    search: null,
+  });
 
-  // Fetch models based on selected make
+  // Fetch makes on component mount
   useEffect(() => {
-    if (!filters.make) {
-      setModels([]);
-      return;
+    const loadInitialData = async () => {
+      await Promise.all([loadMakes(), loadYears(), loadEngineTypes()]);
+    };
+
+    loadInitialData();
+  }, []);
+
+  // Load makes with error handling
+  const loadMakes = async () => {
+    setLoading((prev) => ({ ...prev, makes: true }));
+    setError((prev) => ({ ...prev, makes: null }));
+
+    try {
+      const makesData = await fetchMakes();
+      setMakes(makesData);
+    } catch (err) {
+      console.error("Failed to load makes", err);
+      setError((prev) => ({
+        ...prev,
+        makes: "Failed to load car makes. Please try again.",
+      }));
+    } finally {
+      setLoading((prev) => ({ ...prev, makes: false }));
     }
+  };
 
-    // Replace with actual API call to your Directus backend
-    setLoading(true);
+  // Load years with error handling
+  const loadYears = async () => {
+    setLoading((prev) => ({ ...prev, years: true }));
+    setError((prev) => ({ ...prev, years: null }));
 
-    // Simulating API call
-    setTimeout(() => {
-      // Example models mapping - replace with actual data from your API
-      const modelsByMake = {
-        Škoda: ["Octavia", "Fabia", "Superb", "Kodiaq", "Karoq"],
-        Volkswagen: ["Golf", "Passat", "Tiguan", "Polo", "Arteon"],
-        Toyota: ["Corolla", "RAV4", "Yaris", "Camry", "C-HR"],
-        BMW: ["3 Series", "5 Series", "X3", "X5", "7 Series"],
-        Audi: ["A4", "A6", "Q5", "Q7", "A3"],
-        Mercedes: ["C-Class", "E-Class", "GLC", "A-Class", "S-Class"],
-      };
+    try {
+      const yearsData = await fetchYears();
+      setYears(yearsData);
+    } catch (err) {
+      console.error("Failed to load years", err);
+      setError((prev) => ({
+        ...prev,
+        years: "Failed to load years. Please try again.",
+      }));
+    } finally {
+      setLoading((prev) => ({ ...prev, years: false }));
+    }
+  };
 
-      setModels(modelsByMake[filters.make] || []);
-      setLoading(false);
-    }, 300);
+  // Load engine types with error handling
+  const loadEngineTypes = async () => {
+    setLoading((prev) => ({ ...prev, engineTypes: true }));
+    setError((prev) => ({ ...prev, engineTypes: null }));
+
+    try {
+      const engineTypesData = await fetchEngineTypes();
+      // Convert to title case for display if they aren't already
+      const formattedEngineTypes = engineTypesData.map((type) =>
+        typeof type === "string"
+          ? type.charAt(0).toUpperCase() + type.slice(1)
+          : type
+      );
+      setEngineTypes(formattedEngineTypes);
+    } catch (err) {
+      console.error("Failed to load engine types", err);
+      setError((prev) => ({
+        ...prev,
+        engineTypes: "Failed to load engine types. Please try again.",
+      }));
+    } finally {
+      setLoading((prev) => ({ ...prev, engineTypes: false }));
+    }
+  };
+
+  // Fetch models when make changes
+  useEffect(() => {
+    const loadModels = async () => {
+      if (!filters.make) {
+        setModels([]);
+        return;
+      }
+
+      setLoading((prev) => ({ ...prev, models: true }));
+      setError((prev) => ({ ...prev, models: null }));
+
+      try {
+        const modelsData = await fetchModelsByMake(filters.make);
+        setModels(modelsData);
+      } catch (err) {
+        console.error(`Failed to load models for ${filters.make}`, err);
+        setError((prev) => ({
+          ...prev,
+          models: `Failed to load models for ${filters.make}. Please try again.`,
+        }));
+      } finally {
+        setLoading((prev) => ({ ...prev, models: false }));
+      }
+    };
+
+    // Reset model selection when make changes
+    setFilters((prev) => ({ ...prev, model: "" }));
+    loadModels();
   }, [filters.make]);
 
-  const handleChange = (e) => {
+  // Handle input changes
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handler for mileage inputs
+  // Handle mileage inputs to only accept numbers
   const handleMileageChange = (e) => {
     const { name, value } = e.target;
     // Only allow numbers or empty string
@@ -63,22 +161,46 @@ const CarFilterComponent = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  // Handle form submission
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Replace with your actual search implementation
-    console.log("Searching with filters:", filters);
-    // Call your search API with filters
+    setLoading((prev) => ({ ...prev, search: true }));
+    setError((prev) => ({ ...prev, search: null }));
 
-    // Close the offcanvas on mobile after search (using Bootstrap's API)
-    if (typeof window !== "undefined") {
-      const offcanvasElement = document.getElementById("filterOffcanvas");
-      const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasElement);
-      if (offcanvas) {
-        offcanvas.hide();
+    try {
+      const results = await searchCars(filters, 1, 10);
+
+      // Pass results to parent component
+      if (typeof onFilterResults === "function") {
+        onFilterResults(results.data);
       }
+
+      // Close the offcanvas on mobile after search using a programmatically triggered button
+      if (typeof window !== "undefined") {
+        // Create a temporary button with the proper data attributes
+        const closeButton = document.createElement("button");
+        closeButton.setAttribute("type", "button");
+        closeButton.setAttribute("data-bs-dismiss", "offcanvas");
+        closeButton.setAttribute("data-bs-target", "#filterOffcanvas");
+        closeButton.style.display = "none";
+
+        // Add to body, click it, then remove it
+        document.body.appendChild(closeButton);
+        closeButton.click();
+        document.body.removeChild(closeButton);
+      }
+    } catch (err) {
+      console.error("Error searching cars", err);
+      setError((prev) => ({
+        ...prev,
+        search: "Failed to search cars. Please try again later.",
+      }));
+    } finally {
+      setLoading((prev) => ({ ...prev, search: false }));
     }
   };
 
+  // Reset all filters
   const handleReset = () => {
     setFilters({
       make: "",
@@ -86,13 +208,24 @@ const CarFilterComponent = () => {
       year: "",
       price: "",
       mileageFrom: "",
-      mileageTo: 150000,
+      mileageTo: "",
       engineType: "",
     });
+
+    // If onFilterResults is provided, call it with empty array to clear results
+    if (typeof onFilterResults === "function") {
+      onFilterResults([]);
+    }
   };
 
   const FilterContent = () => (
     <form onSubmit={handleSubmit} className="needs-validation">
+      {error.search && (
+        <div className="alert alert-danger mb-3" role="alert">
+          {error.search}
+        </div>
+      )}
+
       <div className="d-flex flex-column gap-3">
         <div>
           <label htmlFor="makeSelect" className="form-label mb-1 fw-medium">
@@ -103,7 +236,8 @@ const CarFilterComponent = () => {
             className="form-select shadow-sm"
             name="make"
             value={filters.make}
-            onChange={handleChange}
+            onChange={handleInputChange}
+            disabled={loading.makes}
           >
             <option value="">All Makes</option>
             {makes.map((make) => (
@@ -112,6 +246,17 @@ const CarFilterComponent = () => {
               </option>
             ))}
           </select>
+          {loading.makes && (
+            <div
+              className="spinner-border spinner-border-sm text-primary mt-2"
+              role="status"
+            >
+              <span className="visually-hidden">Loading makes...</span>
+            </div>
+          )}
+          {error.makes && (
+            <div className="text-danger mt-1 small">{error.makes}</div>
+          )}
         </div>
 
         <div>
@@ -123,11 +268,11 @@ const CarFilterComponent = () => {
             className="form-select shadow-sm"
             name="model"
             value={filters.model}
-            onChange={handleChange}
-            disabled={!filters.make || loading}
+            onChange={handleInputChange}
+            disabled={!filters.make || loading.models}
           >
             <option value="">All Models</option>
-            {loading ? (
+            {loading.models ? (
               <option disabled>Loading models...</option>
             ) : (
               models.map((model) => (
@@ -137,13 +282,16 @@ const CarFilterComponent = () => {
               ))
             )}
           </select>
-          {loading && (
+          {loading.models && (
             <div
               className="spinner-border spinner-border-sm text-primary mt-2"
               role="status"
             >
-              <span className="visually-hidden">Loading...</span>
+              <span className="visually-hidden">Loading models...</span>
             </div>
+          )}
+          {error.models && (
+            <div className="text-danger mt-1 small">{error.models}</div>
           )}
         </div>
 
@@ -156,7 +304,8 @@ const CarFilterComponent = () => {
             className="form-select shadow-sm"
             name="year"
             value={filters.year}
-            onChange={handleChange}
+            onChange={handleInputChange}
+            disabled={loading.years}
           >
             <option value="">Any Year</option>
             {years.map((year) => (
@@ -165,6 +314,17 @@ const CarFilterComponent = () => {
               </option>
             ))}
           </select>
+          {loading.years && (
+            <div
+              className="spinner-border spinner-border-sm text-primary mt-2"
+              role="status"
+            >
+              <span className="visually-hidden">Loading years...</span>
+            </div>
+          )}
+          {error.years && (
+            <div className="text-danger mt-1 small">{error.years}</div>
+          )}
         </div>
 
         <div>
@@ -176,15 +336,13 @@ const CarFilterComponent = () => {
             className="form-select shadow-sm"
             name="price"
             value={filters.price}
-            onChange={handleChange}
+            onChange={handleInputChange}
           >
-            <option value="">Any Price</option>
-            <option value="0-5000">€0 - €5,000</option>
-            <option value="5000-10000">€5,000 - €10,000</option>
-            <option value="10000-15000">€10,000 - €15,000</option>
-            <option value="15000-20000">€15,000 - €20,000</option>
-            <option value="20000-30000">€20,000 - €30,000</option>
-            <option value="30000+">€30,000+</option>
+            {priceRanges.map((range) => (
+              <option key={range.value} value={range.value}>
+                {range.label}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -231,7 +389,8 @@ const CarFilterComponent = () => {
             className="form-select shadow-sm"
             name="engineType"
             value={filters.engineType}
-            onChange={handleChange}
+            onChange={handleInputChange}
+            disabled={loading.engineTypes}
           >
             <option value="">Any Engine</option>
             {engineTypes.map((type) => (
@@ -240,6 +399,17 @@ const CarFilterComponent = () => {
               </option>
             ))}
           </select>
+          {loading.engineTypes && (
+            <div
+              className="spinner-border spinner-border-sm text-primary mt-2"
+              role="status"
+            >
+              <span className="visually-hidden">Loading engine types...</span>
+            </div>
+          )}
+          {error.engineTypes && (
+            <div className="text-danger mt-1 small">{error.engineTypes}</div>
+          )}
         </div>
 
         <div className="d-flex gap-2 mt-3">
@@ -253,8 +423,17 @@ const CarFilterComponent = () => {
           <button
             type="submit"
             className="btn btn-danger flex-grow-1 d-flex align-items-center justify-content-center gap-1"
+            disabled={loading.search}
           >
-            <i className="bi bi-search"></i> Search
+            {loading.search ? (
+              <div className="spinner-border spinner-border-sm" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+            ) : (
+              <>
+                <i className="bi bi-search"></i> Search
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -280,7 +459,7 @@ const CarFilterComponent = () => {
       <div
         className="offcanvas offcanvas-start"
         data-bs-scroll="true"
-        data-bs-backdrop="false"
+        data-bs-backdrop="true"
         tabIndex="-1"
         id="filterOffcanvas"
         aria-labelledby="filterOffcanvasLabel"
@@ -305,4 +484,4 @@ const CarFilterComponent = () => {
   );
 };
 
-export default CarFilterComponent;
+export default VehicleFilter;
