@@ -1,3 +1,4 @@
+//utils/cookieUtils.js
 export const cookieUtils = {
   getConsentPreferences() {
     try {
