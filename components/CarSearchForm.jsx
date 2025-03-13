@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { cookieUtils } from "@/utils/cookieUtils";
 
 export const CarSearchForm = ({ onSearch, loading, initialValue = "" }) => {
   const [inputValue, setInputValue] = useState(initialValue);
@@ -10,13 +11,16 @@ export const CarSearchForm = ({ onSearch, loading, initialValue = "" }) => {
   const formRef = useRef(null);
 
   useEffect(() => {
-    try {
-      const savedHistory = localStorage.getItem("carSearchHistory");
-      if (savedHistory) {
-        setSearchHistory(JSON.parse(savedHistory));
+    // Only load search history if cookie consent is given
+    if (cookieUtils.canUseLocalStorage()) {
+      try {
+        const savedHistory = localStorage.getItem("carSearchHistory");
+        if (savedHistory) {
+          setSearchHistory(JSON.parse(savedHistory));
+        }
+      } catch (error) {
+        console.error("Error loading search history:", error);
       }
-    } catch (error) {
-      console.error("Error loading search history:", error);
     }
   }, []);
 
@@ -47,17 +51,27 @@ export const CarSearchForm = ({ onSearch, loading, initialValue = "" }) => {
   };
 
   const updateSearchHistory = (searchText) => {
-    try {
+    // Only update search history if cookie consent is given
+    if (cookieUtils.canUseLocalStorage()) {
+      try {
+        const filteredHistory = searchHistory.filter(
+          (item) => item.toLowerCase() !== searchText.toLowerCase()
+        );
+
+        const newHistory = [searchText, ...filteredHistory].slice(0, 6);
+
+        setSearchHistory(newHistory);
+        localStorage.setItem("carSearchHistory", JSON.stringify(newHistory));
+      } catch (error) {
+        console.error("Error updating search history:", error);
+      }
+    } else {
+      // If no consent, just update the in-memory state for the current session
       const filteredHistory = searchHistory.filter(
         (item) => item.toLowerCase() !== searchText.toLowerCase()
       );
-
       const newHistory = [searchText, ...filteredHistory].slice(0, 6);
-
       setSearchHistory(newHistory);
-      localStorage.setItem("carSearchHistory", JSON.stringify(newHistory));
-    } catch (error) {
-      console.error("Error updating search history:", error);
     }
   };
 
