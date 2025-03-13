@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { CarSearchForm } from "@/components/CarSearchForm";
 import { CarListings } from "@/components/CarListings";
 import { formatters } from "@/utils/formatters";
@@ -10,12 +10,14 @@ export default function CarSearchApp() {
   const [carListings, setCarListings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchHistory, setSearchHistory] = useState([]);
+  const [sortOption, setSortOption] = useState("none");
 
   // Load cached results and search history when component mounts
   useEffect(() => {
     if (cookieUtils.canUseLocalStorage()) {
       const cachedResults = localStorage.getItem("carSearchResults");
       const savedHistory = localStorage.getItem("searchHistory");
+      const savedSort = localStorage.getItem("carSortOption");
 
       if (cachedResults) {
         setCarListings(JSON.parse(cachedResults));
@@ -24,8 +26,43 @@ export default function CarSearchApp() {
       if (savedHistory) {
         setSearchHistory(JSON.parse(savedHistory));
       }
+
+      if (savedSort) {
+        setSortOption(savedSort);
+      }
     }
   }, []);
+
+  // Save sort option to localStorage when it changes
+  useEffect(() => {
+    if (cookieUtils.canUseLocalStorage()) {
+      localStorage.setItem("carSortOption", sortOption);
+    }
+  }, [sortOption]);
+
+  // Sort cars based on the selected option
+  const sortedCarListings = useMemo(() => {
+    if (!carListings.length) return [];
+
+    const carsToSort = [...carListings]; // Create a copy to avoid mutating the original array
+
+    switch (sortOption) {
+      case "price_asc":
+        return carsToSort.sort((a, b) => a.price - b.price);
+      case "price_desc":
+        return carsToSort.sort((a, b) => b.price - a.price);
+      case "year_desc":
+        return carsToSort.sort((a, b) => b.year - a.year);
+      case "mileage_asc":
+        return carsToSort.sort((a, b) => a.mileage - b.mileage);
+      case "mileage_desc":
+        return carsToSort.sort((a, b) => b.mileage - a.mileage);
+      case "horsepower_desc":
+        return carsToSort.sort((a, b) => b.horsepower - a.horsepower);
+      default:
+        return carsToSort; // Default sorting (no sorting)
+    }
+  }, [carListings, sortOption]);
 
   // Helper function to update search history
   const updateSearchHistory = (query) => {
@@ -103,6 +140,11 @@ export default function CarSearchApp() {
     }
   };
 
+  // Handle sort option change
+  const handleSort = (option) => {
+    setSortOption(option);
+  };
+
   // Optional: Clear cache when component unmounts
   useEffect(() => {
     return () => {
@@ -110,6 +152,7 @@ export default function CarSearchApp() {
         // Uncomment if you want to clear cache on unmount
         // localStorage.removeItem("carSearchResults");
         // localStorage.removeItem("searchHistory");
+        // localStorage.removeItem("carSortOption");
       }
     };
   }, []);
@@ -125,12 +168,14 @@ export default function CarSearchApp() {
             initialValue={searchHistory.length > 0 ? searchHistory[0] : ""}
           />
 
-          {/* Results display */}
+          {/* Results display with sorting */}
           <div className="mt-4">
             <CarListings
-              cars={carListings}
+              cars={sortedCarListings}
               formatPrice={formatters.formatPrice}
               formatMileage={formatters.formatMileage}
+              onSort={handleSort}
+              currentSort={sortOption}
             />
           </div>
 
