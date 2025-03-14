@@ -5,6 +5,7 @@ import { CarListings } from "@/components/CarListings";
 import { formatters } from "@/utils/formatters";
 import { cookieUtils } from "@/utils/cookieUtils";
 import VehicleFilter from "@/components/VehicleFilter";
+import "animate.css";
 
 export default function CarSearchApp() {
   const [carListings, setCarListings] = useState([]);
@@ -169,7 +170,7 @@ export default function CarSearchApp() {
           />
 
           {/* Results display with sorting */}
-          <div className="mt-4">
+          <div className="mt-4 animate__animated animate__fadeInUp">
             <CarListings
               cars={sortedCarListings}
               formatPrice={formatters.formatPrice}

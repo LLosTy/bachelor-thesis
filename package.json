@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@directus/sdk": "^19.0.1",
+    "animate.css": "^4.1.1",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
     "next": "15.1.3",
