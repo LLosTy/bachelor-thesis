@@ -90,7 +90,7 @@ export async function fetchMakes() {
 
   try {
     const response = await publicDirectus.request(
-      readItems("CarListings", {
+      readItems("car_listings", {
         fields: ["make"],
         limit: -1,
         groupBy: ["make"],
@@ -140,7 +140,7 @@ export async function fetchModelsByMake(make) {
 
   try {
     const response = await publicDirectus.request(
-      readItems("CarListings", {
+      readItems("car_listings", {
         fields: ["model"],
         filter: {
           make: {
@@ -193,7 +193,7 @@ export async function fetchYears() {
 
   try {
     const response = await publicDirectus.request(
-      readItems("CarListings", {
+      readItems("car_listings", {
         fields: ["year"],
         limit: -1,
         groupBy: ["year"],
@@ -241,7 +241,7 @@ export async function fetchEngineTypes() {
 
   try {
     const response = await publicDirectus.request(
-      readItems("CarListings", {
+      readItems("car_listings", {
         fields: ["engine_type"],
         limit: -1,
         groupBy: ["engine_type"],
@@ -282,7 +282,7 @@ export async function searchCars(filters, page = 1, limit = 10) {
     const offset = (page - 1) * limit;
 
     const response = await directusInstance.request(
-      readItems("CarListings", {
+      readItems("car_listings", {
         fields: [
           "id",
           "make",
@@ -292,7 +292,8 @@ export async function searchCars(filters, page = 1, limit = 10) {
           "mileage",
           "engine_type",
           "body_type",
-          "images_id.thumbnail",
+          "images",
+          "engine_specs.horsepower",
         ],
         filter: filterParams,
         sort: ["-date_created"],
@@ -302,12 +303,18 @@ export async function searchCars(filters, page = 1, limit = 10) {
       })
     );
 
+    // Process the cars to include horsepower directly
+    const processedCars = response.map((car) => ({
+      ...car,
+      horsepower: car.engine_specs?.horsepower || "N/A",
+    }));
+
     // Note: Filter count might be accessed differently in v19
     // You might need to adjust this based on the actual response structure
     const totalCount = response.meta?.filter_count || response.length;
 
     return {
-      data: response,
+      data: processedCars,
       meta: {
         total: totalCount,
         page: page,

@@ -20,13 +20,17 @@ try {
   schema = JSON.parse(readFileSync(schemaPath, "utf8"));
 } catch (error) {
   console.error("Error reading file:", error.message);
-  return NextResponse.json(
-    { error: "Failed to read schema file" },
-    { status: 500 }
-  );
+  schema = null;
 }
 
 export async function POST(request) {
+  if (!schema) {
+    return NextResponse.json(
+      { error: "Failed to read schema file" },
+      { status: 500 }
+    );
+  }
+
   try {
     const { query } = await request.json();
 
@@ -37,6 +41,7 @@ export async function POST(request) {
           role: "system",
           content: `You are a helpful assistant that converts natural language queries about cars into JSON filters.
                    Only use fields that exist in the schema provided below.
+                   Use lowercase for make of car.
                    For "affordable cars", return a filter for cars under $30,000.
                    Only respond with the JSON filter object, nothing else. Also differentiate between types of cars.
                    For example: "fun" should be something with a little more performace or be with a body type that would allow a 
@@ -67,37 +72,21 @@ export async function POST(request) {
     });
 
     const filter = JSON.parse(completion.choices[0].message.content);
-
     // Fetch car listings
     const response = await fetch(
-      `http://localhost:8055/items/CarListings?filter=${JSON.stringify(filter)}`
+      `http://localhost:8055/items/car_listings?filter=${JSON.stringify(
+        filter
+      )}&fields=*,engine_specs.*,images`
     );
     const data = await response.json();
 
-    // Add related data for each car
-    const carsWithData = await Promise.all(
-      data.data.map(async (car) => {
-        // Get engine specs
-        const engineResponse = await fetch(
-          `http://localhost:8055/items/engine_specs/${car.engine_specs}`
-        );
-        const engineData = await engineResponse.json();
+    // Process the data to include horsepower directly
+    const processedCars = data.data.map((car) => ({
+      ...car,
+      horsepower: car.engine_specs?.horsepower || "N/A",
+    }));
 
-        // Get images
-        const imagesResponse = await fetch(
-          `http://localhost:8055/items/images/${car.images_id}`
-        );
-        const imagesData = await imagesResponse.json();
-
-        return {
-          ...car,
-          thumbnail: imagesData.data?.thumbnail || null,
-          horsepower: engineData.data?.horsepower || "N/A",
-        };
-      })
-    );
-
-    return NextResponse.json({ cars: carsWithData });
+    return NextResponse.json({ cars: processedCars });
   } catch (error) {
     console.error("Error:", error);
     return NextResponse.json(

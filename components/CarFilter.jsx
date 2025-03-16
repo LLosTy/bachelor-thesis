@@ -9,7 +9,7 @@ import {
   searchCars,
 } from "../services/carApiService";
 
-const VehicleFilter = ({ onFilterResults }) => {
+const CarFilter = ({ onFilterResults }) => {
   // Filter state
   const [filters, setFilters] = useState({
     make: "",
@@ -484,4 +484,4 @@ const VehicleFilter = ({ onFilterResults }) => {
   );
 };
 
-export default VehicleFilter;
+export default CarFilter;

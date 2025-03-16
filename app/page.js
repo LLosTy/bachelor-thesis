@@ -4,7 +4,7 @@ import { CarSearchForm } from "@/components/CarSearchForm";
 import { CarListings } from "@/components/CarListings";
 import { formatters } from "@/utils/formatters";
 import { cookieUtils } from "@/utils/cookieUtils";
-import VehicleFilter from "@/components/VehicleFilter";
+import CarFilter from "@/components/CarFilter";
 import "animate.css";
 
 export default function CarSearchApp() {
@@ -181,7 +181,7 @@ export default function CarSearchApp() {
           </div>
 
           {/* Advanced filter component (floating button and offcanvas) */}
-          <VehicleFilter onFilterResults={handleFilterResults} />
+          <CarFilter onFilterResults={handleFilterResults} />
         </div>
       </div>
     </div>
