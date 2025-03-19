@@ -1,0 +1,418 @@
+{
+  "car_listings": {
+    "fields": {
+      "user_created": {
+        "type": "relation-m2o",
+        "examples": [
+          "7f6a45a2-5d78-4286-bb72-a694ab23085b"
+        ],
+        "source": "relation-data"
+      },
+      "date_created": {
+        "type": "datetime",
+        "examples": [
+          "2025-03-15T16:14:09.440Z"
+        ],
+        "source": "database-values"
+      },
+      "user_updated": {
+        "type": "relation-m2o",
+        "examples": [
+          "7f6a45a2-5d78-4286-bb72-a694ab23085b"
+        ],
+        "source": "relation-data"
+      },
+      "date_updated": {
+        "type": "datetime",
+        "examples": [
+          "2025-03-16T18:57:23.162Z"
+        ],
+        "source": "database-values"
+      },
+      "make": {
+        "type": "string",
+        "examples": [
+          "bmw",
+          "skoda"
+        ],
+        "source": "choices-options"
+      },
+      "model": {
+        "type": "string",
+        "examples": [
+          "M2"
+        ],
+        "source": "database-values"
+      },
+      "year": {
+        "type": "integer",
+        "examples": [
+          2022
+        ],
+        "source": "database-values"
+      },
+      "body_type": {
+        "type": "string",
+        "examples": [
+          "sedan",
+          "hatchback",
+          "suv",
+          "coupe",
+          "convertible",
+          "station_wagon",
+          "pickup",
+          "minivan",
+          "limousine",
+          "van"
+        ],
+        "source": "choices-options"
+      },
+      "mileage": {
+        "type": "integer",
+        "examples": [
+          1
+        ],
+        "source": "database-values"
+      },
+      "price": {
+        "type": "float",
+        "examples": [
+          1
+        ],
+        "source": "database-values"
+      },
+      "engine_specs": {
+        "type": "relation-m2o",
+        "examples": [
+          "7f6a45a2-5d78-4286-bb72-a694ab23085b"
+        ],
+        "source": "relation-data"
+      },
+      "features_id": {
+        "type": "relation-m2o",
+        "examples": [
+          "7f6a45a2-5d78-4286-bb72-a694ab23085b"
+        ],
+        "source": "relation-data"
+      },
+      "engine_type": {
+        "type": "string",
+        "examples": [
+          "electric",
+          "diesel",
+          "gasoline",
+          "hybrid"
+        ],
+        "source": "choices-options"
+      },
+      "images": {
+        "type": "relation-m2o",
+        "examples": [
+          "7f6a45a2-5d78-4286-bb72-a694ab23085b"
+        ],
+        "source": "relation-data"
+      }
+    }
+  },
+  "engine_specs": {
+    "fields": {
+      "user_created": {
+        "type": "relation-m2o",
+        "examples": [
+          "7f6a45a2-5d78-4286-bb72-a694ab23085b"
+        ],
+        "source": "relation-data"
+      },
+      "date_created": {
+        "type": "datetime",
+        "examples": [
+          "2025-03-15T16:14:09.437Z"
+        ],
+        "source": "database-values"
+      },
+      "user_updated": {
+        "type": "relation-m2o",
+        "examples": [
+          "7f6a45a2-5d78-4286-bb72-a694ab23085b"
+        ],
+        "source": "relation-data"
+      },
+      "date_updated": {
+        "type": "datetime",
+        "examples": [
+          "YYYY-MM-DD HH:mm:ss"
+        ],
+        "source": "default"
+      },
+      "displacement": {
+        "type": "float",
+        "examples": [
+          2
+        ],
+        "source": "database-values"
+      },
+      "horsepower": {
+        "type": "integer",
+        "examples": [
+          1
+        ],
+        "source": "database-values"
+      },
+      "cylinders": {
+        "type": "integer",
+        "examples": [
+          3
+        ],
+        "source": "database-values"
+      },
+      "car_listings_id": {
+        "type": "relation-o2m",
+        "examples": [
+          "7f6a45a2-5d78-4286-bb72-a694ab23085b"
+        ],
+        "source": "relation-data"
+      }
+    }
+  },
+  "features": {
+    "fields": {
+      "user_created": {
+        "type": "relation-m2o",
+        "examples": [
+          "7f6a45a2-5d78-4286-bb72-a694ab23085b"
+        ],
+        "source": "relation-data"
+      },
+      "date_created": {
+        "type": "datetime",
+        "examples": [
+          "2025-03-15T16:14:09.433Z"
+        ],
+        "source": "database-values"
+      },
+      "user_updated": {
+        "type": "relation-m2o",
+        "examples": [
+          "7f6a45a2-5d78-4286-bb72-a694ab23085b"
+        ],
+        "source": "relation-data"
+      },
+      "date_updated": {
+        "type": "datetime",
+        "examples": [
+          "YYYY-MM-DD HH:mm:ss"
+        ],
+        "source": "default"
+      },
+      "warranty": {
+        "type": "boolean",
+        "examples": [
+          true,
+          false
+        ],
+        "source": "standard"
+      },
+      "tow_bar": {
+        "type": "boolean",
+        "examples": [
+          true,
+          false
+        ],
+        "source": "standard"
+      },
+      "auxilliary_heater": {
+        "type": "boolean",
+        "examples": [
+          true,
+          false
+        ],
+        "source": "standard"
+      },
+      "keyless": {
+        "type": "boolean",
+        "examples": [
+          true,
+          false
+        ],
+        "source": "standard"
+      },
+      "parking_cam_360": {
+        "type": "boolean",
+        "examples": [
+          true,
+          false
+        ],
+        "source": "standard"
+      },
+      "adaptive_cruise_control": {
+        "type": "boolean",
+        "examples": [
+          true,
+          false
+        ],
+        "source": "standard"
+      },
+      "panoramic_roof": {
+        "type": "boolean",
+        "examples": [
+          true,
+          false
+        ],
+        "source": "standard"
+      },
+      "massaging_seats": {
+        "type": "boolean",
+        "examples": [
+          true,
+          false
+        ],
+        "source": "standard"
+      },
+      "air_suspension": {
+        "type": "boolean",
+        "examples": [
+          true,
+          false
+        ],
+        "source": "standard"
+      },
+      "heated_steering_wheel": {
+        "type": "boolean",
+        "examples": [
+          true,
+          false
+        ],
+        "source": "standard"
+      },
+      "soft_close": {
+        "type": "boolean",
+        "examples": [
+          true,
+          false
+        ],
+        "source": "standard"
+      },
+      "blind_spot_monitoring": {
+        "type": "boolean",
+        "examples": [
+          true,
+          false
+        ],
+        "source": "standard"
+      },
+      "lane_keeping_assist": {
+        "type": "boolean",
+        "examples": [
+          true,
+          false
+        ],
+        "source": "standard"
+      },
+      "ventilated_seats": {
+        "type": "boolean",
+        "examples": [
+          true,
+          false
+        ],
+        "source": "standard"
+      },
+      "power_liftgate": {
+        "type": "boolean",
+        "examples": [
+          true,
+          false
+        ],
+        "source": "standard"
+      },
+      "heated_seats": {
+        "type": "boolean",
+        "examples": [
+          true,
+          false
+        ],
+        "source": "standard"
+      },
+      "car_listing_id": {
+        "type": "boolean",
+        "examples": [
+          true,
+          false
+        ],
+        "source": "standard"
+      },
+      "car_listings_id": {
+        "type": "relation-o2m",
+        "examples": [
+          "7f6a45a2-5d78-4286-bb72-a694ab23085b"
+        ],
+        "source": "relation-data"
+      }
+    }
+  },
+  "images": {
+    "fields": {
+      "user_created": {
+        "type": "relation-m2o",
+        "examples": [
+          "7f6a45a2-5d78-4286-bb72-a694ab23085b"
+        ],
+        "source": "relation-data"
+      },
+      "date_created": {
+        "type": "datetime",
+        "examples": [
+          "2025-03-16T18:57:23.145Z"
+        ],
+        "source": "database-values"
+      },
+      "user_updated": {
+        "type": "relation-m2o",
+        "examples": [
+          "7f6a45a2-5d78-4286-bb72-a694ab23085b"
+        ],
+        "source": "relation-data"
+      },
+      "date_updated": {
+        "type": "datetime",
+        "examples": [
+          "YYYY-MM-DD HH:mm:ss"
+        ],
+        "source": "default"
+      },
+      "images": {
+        "type": "relation",
+        "examples": [
+          "7f6a45a2-5d78-4286-bb72-a694ab23085b"
+        ],
+        "source": "relation-data"
+      },
+      "car_listings_id": {
+        "type": "relation-o2m",
+        "examples": [
+          "7f6a45a2-5d78-4286-bb72-a694ab23085b"
+        ],
+        "source": "relation-data"
+      }
+    }
+  },
+  "images_files": {
+    "fields": {
+      "images_id": {
+        "type": "string",
+        "examples": [
+          "b8cfd51a-a0ea-438a-9f53-4487161222d9"
+        ],
+        "source": "database-values"
+      },
+      "sort": {
+        "type": "integer",
+        "examples": [
+          3,
+          2,
+          1
+        ],
+        "source": "database-values"
+      }
+    }
+  }
+}
