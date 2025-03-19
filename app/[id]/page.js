@@ -8,7 +8,7 @@ async function getCarListing(id) {
   try {
     // Fetch car listing with related engine specs
     const response = await fetch(
-      `${baseUrl}/items/car_listings/${id}?fields=*,engine_specs.*,overview.*`,
+      `${baseUrl}/items/car_listings/${id}?fields=*,engine_specs.*,overview.*,features_id.*`,
       {
         headers: {
           "Content-Type": "application/json",
