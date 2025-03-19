@@ -75,10 +75,6 @@ export default async function CarDetailPage({ params }) {
     notFound();
   }
 
-  // Format price and mileage using the formatters utility
-  const formattedPrice = formatters.formatPrice(car.price);
-  const formattedMileage = formatters.formatMileage(car.mileage);
-
   // Capitalize make and model for display
   const capitalizedMake = car.make
     .split("-")
@@ -91,8 +87,8 @@ export default async function CarDetailPage({ params }) {
     <CarDetailContent
       car={car}
       carName={carName}
-      formattedPrice={formattedPrice}
-      formattedMileage={formattedMileage}
+      formattedPrice={formatters.formatPrice(car.price)}
+      formattedMileage={formatters.formatMileage(car.mileage)}
       baseUrl={baseUrl}
     />
   );
