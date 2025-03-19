@@ -49,6 +49,7 @@ import {
   TableHead,
   TableRow,
 } from "@/components/ui/table";
+import CarFeaturesList from "./CarFeaturesList";
 
 export function CarDetailContent({
   car,
@@ -240,7 +241,9 @@ export function CarDetailContent({
                 <TabsList className="grid grid-cols-3 w-full">
                   <TabsTrigger value="overview">Overview</TabsTrigger>
                   <TabsTrigger value="features">Features</TabsTrigger>
-                  <TabsTrigger value="history">History</TabsTrigger>
+                  <TabsTrigger value="specifications">
+                    Specifications
+                  </TabsTrigger>
                 </TabsList>
                 <TabsContent value="overview" className="mt-6">
                   <div className="space-y-4">
@@ -264,96 +267,75 @@ export function CarDetailContent({
                 </TabsContent>
                 <TabsContent value="features" className="mt-6">
                   <ScrollArea className="h-full">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {car.engine_specs && (
-                        <>
-                          <Card>
-                            <CardContent className="p-4">
-                              <div className="flex items-start gap-3">
-                                <div className="bg-primary/10 p-2 rounded-full">
-                                  <FileText className="h-5 w-5 text-primary" />
-                                </div>
-                                <div>
-                                  <h3 className="font-medium">Engine</h3>
-                                  <p className="text-sm text-muted-foreground">
-                                    {car.engine_specs.displacement}cc,{" "}
-                                    {car.engine_specs.cylinders} cylinders
-                                  </p>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                          <Card>
-                            <CardContent className="p-4">
-                              <div className="flex items-start gap-3">
-                                <div className="bg-primary/10 p-2 rounded-full">
-                                  <Zap className="h-5 w-5 text-primary" />
-                                </div>
-                                <div>
-                                  <h3 className="font-medium">Performance</h3>
-                                  <p className="text-sm text-muted-foreground">
-                                    {car.engine_specs.horsepower} horsepower
-                                  </p>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </>
-                      )}
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <div className="bg-primary/10 p-2 rounded-full">
-                              <Package className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <h3 className="font-medium">Body Type</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {car.body_type}
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <div className="bg-primary/10 p-2 rounded-full">
-                              <Clock className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <h3 className="font-medium">Year</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {car.year} model
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                      <CarFeaturesList features={car.features_id} />
                     </div>
                   </ScrollArea>
                 </TabsContent>
-                <TabsContent value="history" className="mt-6">
+                <TabsContent value="specifications" className="mt-6">
                   <div className="space-y-4">
+                    {car.engine_specs && (
+                      <>
+                        <Card>
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="bg-primary/10 p-2 rounded-full">
+                                <FileText className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <h3 className="font-medium">Engine</h3>
+                                <p className="text-sm text-muted-foreground">
+                                  {car.engine_specs.displacement}cc,{" "}
+                                  {car.engine_specs.cylinders} cylinders
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="bg-primary/10 p-2 rounded-full">
+                                <Zap className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <h3 className="font-medium">Performance</h3>
+                                <p className="text-sm text-muted-foreground">
+                                  {car.engine_specs.horsepower} horsepower
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </>
+                    )}
                     <Card>
-                      <CardContent className="p-4 flex items-center gap-4">
-                        <FileText className="h-10 w-10 text-primary" />
-                        <div>
-                          <h3 className="font-medium">Service History</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Complete maintenance records available upon request
-                          </p>
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="bg-primary/10 p-2 rounded-full">
+                            <Package className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-medium">Body Type</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {car.body_type}
+                            </p>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
                     <Card>
-                      <CardContent className="p-4 flex items-center gap-4">
-                        <Shield className="h-10 w-10 text-primary" />
-                        <div>
-                          <h3 className="font-medium">Vehicle Inspection</h3>
-                          <p className="text-sm text-muted-foreground">
-                            This vehicle has passed our comprehensive inspection
-                          </p>
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="bg-primary/10 p-2 rounded-full">
+                            <Clock className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-medium">Year</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {car.year} model
+                            </p>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
