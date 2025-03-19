@@ -125,6 +125,7 @@ export function CarDetailContent({
                       </span>
                     </div>
                   )}
+
                   {car.images_urls && car.images_urls.length > 1 && (
                     <>
                       <Button
@@ -147,6 +148,35 @@ export function CarDetailContent({
                   )}
                 </AspectRatio>
               </div>
+              {car.images_urls && car.images_urls.length > 0 && (
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {car.images_urls.map((imageUrl, index) => (
+                    <div
+                      key={index}
+                      className={`relative rounded-md overflow-hidden cursor-pointer flex-shrink-0 w-24 h-16 border-2 ${
+                        index === currentImageIndex
+                          ? "border-primary"
+                          : "border-transparent"
+                      }`}
+                      onClick={() => setCurrentImageIndex(index)}
+                    >
+                      <AspectRatio ratio={4 / 3}>
+                        <Image
+                          src={imageUrl || "/placeholder.svg"}
+                          alt={`${carName} view ${index + 1}`}
+                          fill
+                          className={`object-cover transition-all ${
+                            currentImageIndex === index
+                              ? "ring-2 ring-primary"
+                              : ""
+                          }`}
+                          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                        />
+                      </AspectRatio>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -185,7 +215,7 @@ export function CarDetailContent({
                   <span className="text-sm text-muted-foreground block">
                     Mileage
                   </span>
-                  <span className="font-medium">{formattedMileage} mi</span>
+                  <span className="font-medium">{formattedMileage} </span>
                 </div>
               </CardContent>
             </Card>
@@ -404,31 +434,6 @@ export function CarDetailContent({
                 </CardContent>
               </Card>
             </div>
-            {car.images_urls && car.images_urls.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
-                {car.images_urls.map((imageUrl, index) => (
-                  <div
-                    key={index}
-                    className="cursor-pointer rounded-md overflow-hidden"
-                    onClick={() => setCurrentImageIndex(index)}
-                  >
-                    <AspectRatio ratio={4 / 3}>
-                      <Image
-                        src={imageUrl || "/placeholder.svg"}
-                        alt={`${carName} view ${index + 1}`}
-                        fill
-                        className={`object-cover transition-all ${
-                          currentImageIndex === index
-                            ? "ring-2 ring-primary"
-                            : ""
-                        }`}
-                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                      />
-                    </AspectRatio>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </div>
