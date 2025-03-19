@@ -2,15 +2,25 @@
 
 import { useState, useMemo } from "react";
 import { CarCard } from "./CarCard";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info } from "lucide-react";
+import {
+  ArrowDownNarrowWide,
+  Info,
+  DollarSign,
+  Calendar,
+  Gauge,
+  Zap,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const CarListings = ({ cars, formatPrice, formatMileage }) => {
   const [sortOption, setSortOption] = useState("none");
@@ -43,6 +53,28 @@ export const CarListings = ({ cars, formatPrice, formatMileage }) => {
     setSortOption(value);
   };
 
+  // Helper function to get the current sort option text
+  const getSortOptionText = () => {
+    switch (sortOption) {
+      case "price_asc":
+        return "Price: Low to High";
+      case "price_desc":
+        return "Price: High to Low";
+      case "year_desc":
+        return "Newest First";
+      case "mileage_asc":
+        return "Mileage: Low to High";
+      case "mileage_desc":
+        return "Mileage: High to Low";
+      case "horsepower_desc":
+        return "Horsepower: High to Low";
+      case "none":
+        return "Default";
+      default:
+        return "Sort by";
+    }
+  };
+
   if (!cars.length) {
     return (
       <Alert variant="info" className="mb-6">
@@ -57,22 +89,58 @@ export const CarListings = ({ cars, formatPrice, formatMileage }) => {
   return (
     <div className="space-y-6">
       <div className="flex justify-end mb-4">
-        <Select value={sortOption} onValueChange={handleSort}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">Default</SelectItem>
-            <SelectItem value="price_asc">Price: Low to High</SelectItem>
-            <SelectItem value="price_desc">Price: High to Low</SelectItem>
-            <SelectItem value="year_desc">Newest First</SelectItem>
-            <SelectItem value="mileage_asc">Mileage: Low to High</SelectItem>
-            <SelectItem value="mileage_desc">Mileage: High to Low</SelectItem>
-            <SelectItem value="horsepower_desc">
-              Horsepower: High to Low
-            </SelectItem>
-          </SelectContent>
-        </Select>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="w-[200px] justify-between">
+              {getSortOptionText()}
+              <ArrowDownNarrowWide className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-[200px]">
+            <DropdownMenuLabel>Sort Options</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem onClick={() => handleSort("none")}>
+                Default
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem onClick={() => handleSort("price_asc")}>
+                <DollarSign className="mr-2 h-4 w-4" />
+                <span>Price: Low to High</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSort("price_desc")}>
+                <DollarSign className="mr-2 h-4 w-4" />
+                <span>Price: High to Low</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem onClick={() => handleSort("year_desc")}>
+                <Calendar className="mr-2 h-4 w-4" />
+                <span>Newest First</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem onClick={() => handleSort("mileage_asc")}>
+                <Gauge className="mr-2 h-4 w-4" />
+                <span>Mileage: Low to High</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSort("mileage_desc")}>
+                <Gauge className="mr-2 h-4 w-4" />
+                <span>Mileage: High to Low</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem onClick={() => handleSort("horsepower_desc")}>
+                <Zap className="mr-2 h-4 w-4" />
+                <span>Horsepower: High to Low</span>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <div className="mt-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
