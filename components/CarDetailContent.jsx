@@ -268,7 +268,7 @@ export function CarDetailContent({
                 <TabsContent value="features" className="mt-6">
                   <ScrollArea className="h-full">
                     <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                      <CarFeaturesList features={car.features_id} />
+                      <CarFeaturesList features={car.features} />
                     </div>
                   </ScrollArea>
                 </TabsContent>
