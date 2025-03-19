@@ -244,22 +244,20 @@ export function CarDetailContent({
                 </TabsList>
                 <TabsContent value="overview" className="mt-6">
                   <div className="space-y-4">
-                    <p>
-                      This {car.year} {car.make} {car.model} represents
-                      exceptional quality and performance. With its{" "}
-                      {car.engine_specs?.horsepower || "powerful"} horsepower{" "}
-                      {car.engine_type} engine, this vehicle delivers an
-                      impressive driving experience.
-                    </p>
-                    <p>
-                      The {car.body_type} body style offers both elegance and
-                      functionality, making it perfect for both daily commutes
-                      and special occasions.
-                    </p>
-                    <p>
-                      With only {formattedMileage} miles, this vehicle has
-                      plenty of life left to offer its next owner.
-                    </p>
+                    {car.overview ? (
+                      <>
+                        {car.overview.overview_text
+                          .split("\n\n")
+                          .map((paragraph, index) => (
+                            <p key={index} className="mb-4">
+                              {paragraph}
+                            </p>
+                          ))}
+                      </>
+                    ) : (
+                      /* Optional fallback content if overview doesn't exist */
+                      <p>No overview available</p>
+                    )}
                   </div>
 
                   {/* Image Grid */}
