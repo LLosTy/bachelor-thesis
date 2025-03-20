@@ -333,7 +333,6 @@ export async function searchCars(filters, page = 1, limit = 10) {
  */
 export function getPriceRangeOptions() {
   return [
-    { value: "", label: "Any Price" },
     { value: "0-100000", label: "Up to 100,000 Kč" },
     { value: "0-200000", label: "Up to 200,000 Kč" },
     { value: "0-300000", label: "Up to 300,000 Kč" },

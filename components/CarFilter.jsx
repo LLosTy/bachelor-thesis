@@ -33,13 +33,13 @@ import {
 const CarFilter = ({ onFilterResults }) => {
   // Filter state
   const [filters, setFilters] = useState({
-    make: "",
-    model: "",
-    year: "",
+    make: "all-makes",
+    model: "all-models",
+    year: "any-year",
     price: "",
     mileageFrom: "",
     mileageTo: "",
-    engineType: "",
+    engineType: "any-engine",
   });
 
   // Data state
@@ -141,7 +141,7 @@ const CarFilter = ({ onFilterResults }) => {
   // Fetch models when make changes
   useEffect(() => {
     const loadModels = async () => {
-      if (!filters.make) {
+      if (!filters.make || filters.make === "all-makes") {
         setModels([]);
         return;
       }
@@ -164,7 +164,7 @@ const CarFilter = ({ onFilterResults }) => {
     };
 
     // Reset model selection when make changes
-    setFilters((prev) => ({ ...prev, model: "" }));
+    setFilters((prev) => ({ ...prev, model: "all-models" }));
     loadModels();
   }, [filters.make]);
 
@@ -195,7 +195,17 @@ const CarFilter = ({ onFilterResults }) => {
     setError((prev) => ({ ...prev, search: null }));
 
     try {
-      const results = await searchCars(filters, 1, 10);
+      // Create a modified version of filters for the API
+      const apiFilters = {
+        ...filters,
+        make: filters.make === "all-makes" ? "" : filters.make,
+        model: filters.model === "all-models" ? "" : filters.model,
+        year: filters.year === "any-year" ? "" : filters.year,
+        engineType:
+          filters.engineType === "any-engine" ? "" : filters.engineType,
+      };
+
+      const results = await searchCars(apiFilters, 1, 10);
 
       // Pass results to parent component
       if (typeof onFilterResults === "function") {
@@ -218,13 +228,13 @@ const CarFilter = ({ onFilterResults }) => {
   // Reset all filters
   const handleReset = () => {
     setFilters({
-      make: "",
-      model: "",
-      year: "",
+      make: "all-makes",
+      model: "all-models",
+      year: "any-year",
       price: "",
       mileageFrom: "",
       mileageTo: "",
-      engineType: "",
+      engineType: "any-engine",
     });
 
     // If onFilterResults is provided, call it with empty array to clear results
@@ -259,7 +269,7 @@ const CarFilter = ({ onFilterResults }) => {
               <SelectValue placeholder="All Makes" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Makes</SelectItem>
+              <SelectItem value="all-makes">All Makes</SelectItem>
               {makes.map((make) => (
                 <SelectItem key={make} value={make}>
                   {make}
@@ -295,9 +305,9 @@ const CarFilter = ({ onFilterResults }) => {
               <SelectValue placeholder="All Models" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Models</SelectItem>
+              <SelectItem value="all-models">All Models</SelectItem>
               {loading.models ? (
-                <SelectItem value="" disabled>
+                <SelectItem value="loading" disabled>
                   Loading models...
                 </SelectItem>
               ) : (
@@ -337,7 +347,7 @@ const CarFilter = ({ onFilterResults }) => {
               <SelectValue placeholder="Any Year" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any Year</SelectItem>
+              <SelectItem value="any-year">Any Year</SelectItem>
               {years.map((year) => (
                 <SelectItem key={year} value={year.toString()}>
                   {year}
@@ -425,7 +435,7 @@ const CarFilter = ({ onFilterResults }) => {
               <SelectValue placeholder="Any Engine" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any Engine</SelectItem>
+              <SelectItem value="any-engine">Any Engine</SelectItem>
               {engineTypes.map((type) => (
                 <SelectItem key={type} value={type}>
                   {type}
@@ -482,7 +492,7 @@ const CarFilter = ({ onFilterResults }) => {
       {/* Filter Toggle Button */}
       <Button
         variant="primary"
-        className="fixed bottom-0 left-0 m-3 rounded-full h-[50px] w-[50px] p-0 flex items-center justify-center shadow-lg z-50"
+        className="fixed bottom-0 left-0 m-3 rounded-full h-[50px] w-[50px] p-0 flex items-center justify-center drop-shadow-xl bg-neutral-100 z-50"
         onClick={() => setOpen(true)}
       >
         <Filter className="h-5 w-5" />
