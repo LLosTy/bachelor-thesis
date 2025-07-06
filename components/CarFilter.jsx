@@ -296,14 +296,14 @@ export default function CarFilter({ onFilterResults }) {
     setFilters(resetFilters);
     // Also perform a search with reset filters
     const results = await searchCars(resetFilters);
-    onFilterResults?.(results.data);
+    onFilterResults?.(results.data, resetFilters);
     setIsSheetOpen(false); // Close the sheet after reset and search
   };
 
   const handleSearch = async () => {
     try {
       const results = await searchCars(filters);
-      onFilterResults?.(results.data); // Pass results to the parent component
+      onFilterResults?.(results.data, filters); // Pass both results and filters to the parent component
     } catch (error) {
       console.error("Failed to search cars:", error);
       // Optionally, handle error display to the user

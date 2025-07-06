@@ -6,6 +6,39 @@ const directusUrl =
   process.env.NEXT_PUBLIC_DIRECTUS_URL || "http://localhost:8055";
 const directusToken = process.env.NEXT_PUBLIC_DIRECTUS_TOKEN;
 
+// Validate environment variables
+const validateConfig = () => {
+  const errors = [];
+
+  if (!directusUrl) {
+    errors.push("NEXT_PUBLIC_DIRECTUS_URL is not set");
+  } else if (
+    directusUrl === "http://localhost:8055" &&
+    process.env.NODE_ENV === "development"
+  ) {
+    // In development, localhost:8055 is acceptable
+    console.log("Using local Directus instance:", directusUrl);
+  } else if (directusUrl === "http://localhost:8055") {
+    errors.push(
+      "NEXT_PUBLIC_DIRECTUS_URL is set to default localhost - please configure properly for production"
+    );
+  }
+
+  if (!directusToken) {
+    console.warn("NEXT_PUBLIC_DIRECTUS_TOKEN is not set - using public access");
+  }
+
+  return errors;
+};
+
+// Log configuration issues in development
+if (process.env.NODE_ENV === "development") {
+  const configErrors = validateConfig();
+  if (configErrors.length > 0) {
+    console.error("Directus Configuration Issues:", configErrors);
+  }
+}
+
 // Create a public Directus instance (without authentication)
 export const publicDirectus = createDirectus(directusUrl).with(rest());
 
@@ -17,6 +50,24 @@ const directus = directusToken
 // Simplified auth check function
 export const authenticateDirectus = async () => {
   return directus;
+};
+
+// Connection test function
+export const testDirectusConnection = async () => {
+  try {
+    const response = await publicDirectus.request(rest.ping());
+    return { success: true, data: response };
+  } catch (error) {
+    console.error("Directus connection test failed:", error);
+    return {
+      success: false,
+      error: error.message,
+      config: {
+        url: directusUrl,
+        hasToken: !!directusToken,
+      },
+    };
+  }
 };
 
 // Generate the filter parameters for the Directus filter syntax

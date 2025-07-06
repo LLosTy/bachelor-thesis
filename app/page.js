@@ -12,15 +12,22 @@ import CarFilter from "@/components/CarFilter";
 export default function CarSearchApp() {
   const [carListings, setCarListings] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [searchHistory, setSearchHistory] = useState([]);
   const [sortOption, setSortOption] = useState("none");
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(3); // Set to 3 for testing
+  const [itemsPerPage, setItemsPerPage] = useState(3);
   const [currentQuery, setCurrentQuery] = useState("");
+
+  // Add state to track filter mode vs search mode
+  const [isFilterMode, setIsFilterMode] = useState(false);
+  const [filteredResults, setFilteredResults] = useState([]);
+  const [currentFilters, setCurrentFilters] = useState(null);
 
   // Save state to localStorage
   const saveToLocalStorage = useCallback((key, value) => {
@@ -33,75 +40,164 @@ export default function CarSearchApp() {
     }
   }, []);
 
+  // Helper function to update search history
+  const updateSearchHistory = useCallback(
+    (query) => {
+      const newHistory = [
+        query,
+        ...searchHistory.filter((item) => item !== query),
+      ];
+      const limitedHistory = newHistory.slice(0, 10);
+      setSearchHistory(limitedHistory);
+      saveToLocalStorage("searchHistory", limitedHistory);
+    },
+    [searchHistory, saveToLocalStorage]
+  );
+
+  // Function to fetch cars with pagination
+  const fetchCars = useCallback(
+    async (query, page, limit, fetchAll = false) => {
+      if (!query) return;
+      if (loading) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch("/api/cars", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query,
+            page: 1,
+            limit: fetchAll ? 100 : limit,
+          }),
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { error: "Unknown error occurred" };
+          }
+          let errorMessage = "An error occurred while fetching cars";
+          if (response.status === 503) {
+            errorMessage =
+              "Database service is currently unavailable. Please try again later.";
+          } else if (response.status === 400) {
+            errorMessage = errorData.error || "Invalid request";
+          } else if (response.status === 401) {
+            errorMessage =
+              "Authentication failed. Please check your configuration.";
+          } else if (response.status === 403) {
+            errorMessage = "Access denied. Please check your permissions.";
+          } else if (response.status === 404) {
+            errorMessage = "Resource not found.";
+          }
+          setError(errorMessage);
+          setCarListings([]);
+          setTotalPages(1);
+          setTotalItems(0);
+          return;
+        }
+        const data = await response.json();
+        if (data.cars) {
+          if (fetchAll) {
+            // Store all results in memory and paginate in memory
+            setFilteredResults(data.cars);
+            setIsFilterMode(true);
+            setCurrentFilters(null);
+            setCurrentPage(1);
+            setTotalItems(data.cars.length);
+            const calculatedTotalPages = Math.max(
+              1,
+              Math.ceil(data.cars.length / itemsPerPage)
+            );
+            setTotalPages(calculatedTotalPages);
+            setCarListings(data.cars.slice(0, itemsPerPage));
+          } else {
+            setCarListings(data.cars);
+            setError(null);
+            saveToLocalStorage("carSearchResults", data.cars);
+            if (data.pagination) {
+              const paginationInfo = data.pagination;
+              setTotalPages(paginationInfo.totalPages);
+              setTotalItems(paginationInfo.totalItems);
+              saveToLocalStorage("paginationInfo", paginationInfo);
+            }
+            updateSearchHistory(query);
+          }
+        } else {
+          setCarListings([]);
+          setError("No cars found for your search");
+        }
+      } catch (error) {
+        setError(error.message || "An error occurred while fetching cars");
+        setCarListings([]);
+        setTotalPages(1);
+        setTotalItems(0);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [saveToLocalStorage, updateSearchHistory, loading, itemsPerPage]
+  );
+
   // Load cached results and search history when component mounts
   useEffect(() => {
-    const loadInitialData = () => {
-      if (cookieUtils.canUseLocalStorage()) {
-        const cachedResults = localStorage.getItem("carSearchResults");
-        const savedHistory = localStorage.getItem("searchHistory");
-        const savedSort = localStorage.getItem("carSortOption");
-        const savedPage = localStorage.getItem("currentPage");
-        const savedItemsPerPage = localStorage.getItem("itemsPerPage");
-        const savedQuery = localStorage.getItem("currentQuery");
-        const savedPaginationInfo = localStorage.getItem("paginationInfo");
+    if (cookieUtils.canUseLocalStorage()) {
+      const cachedResults = localStorage.getItem("carSearchResults");
+      const savedHistory = localStorage.getItem("searchHistory");
+      const savedSort = localStorage.getItem("carSortOption");
+      const savedPage = localStorage.getItem("currentPage");
+      const savedItemsPerPage = localStorage.getItem("itemsPerPage");
+      const savedQuery = localStorage.getItem("currentQuery");
+      const savedPaginationInfo = localStorage.getItem("paginationInfo");
+      const savedIsFilterMode = localStorage.getItem("isFilterMode");
+      const savedFilteredResults = localStorage.getItem("filteredResults");
+      const savedCurrentFilters = localStorage.getItem("currentFilters");
 
-        let pageToLoad = 1;
-        let limitToUse = 3;
-        let queryToUse = "";
-
-        if (savedQuery) {
-          queryToUse = savedQuery;
-          setCurrentQuery(savedQuery);
-        }
-
-        if (savedHistory) {
-          const parsedHistory = JSON.parse(savedHistory);
-          setSearchHistory(parsedHistory);
-
-          // If no saved query but we have history, use the first item
-          if (!queryToUse && parsedHistory.length > 0) {
-            queryToUse = parsedHistory[0];
-            setCurrentQuery(queryToUse);
-          }
-        }
-
-        if (savedSort) {
-          setSortOption(savedSort);
-        }
-
-        if (savedPage) {
-          const parsedPage = parseInt(savedPage, 10);
-          setCurrentPage(parsedPage);
-          pageToLoad = parsedPage;
-        }
-
-        if (savedItemsPerPage) {
-          const parsedLimit = parseInt(savedItemsPerPage, 10);
-          setItemsPerPage(parsedLimit);
-          limitToUse = parsedLimit;
-        }
-
-        if (savedPaginationInfo) {
-          const paginationInfo = JSON.parse(savedPaginationInfo);
-          setTotalPages(paginationInfo.totalPages);
-          setTotalItems(paginationInfo.totalItems);
-        }
-
-        if (cachedResults) {
-          setCarListings(JSON.parse(cachedResults));
-        }
-
-        // If we have a query, load the data
-        if (queryToUse) {
-          // We use a small timeout to ensure the state is updated before fetching
-          setTimeout(() => {
-            fetchCars(queryToUse, pageToLoad, limitToUse);
-          }, 0);
-        }
+      if (savedHistory) {
+        setSearchHistory(JSON.parse(savedHistory));
       }
-    };
-
-    loadInitialData();
+      if (savedSort) {
+        setSortOption(savedSort);
+      }
+      let page = 1;
+      let perPage = 3;
+      if (savedPage) {
+        page = parseInt(savedPage, 10);
+        setCurrentPage(page);
+      }
+      if (savedItemsPerPage) {
+        perPage = parseInt(savedItemsPerPage, 10);
+        setItemsPerPage(perPage);
+      }
+      if (savedPaginationInfo) {
+        const paginationInfo = JSON.parse(savedPaginationInfo);
+        setTotalPages(paginationInfo.totalPages);
+        setTotalItems(paginationInfo.totalItems);
+      }
+      if (savedIsFilterMode === "true" && savedFilteredResults) {
+        // Restore filter mode and filtered results
+        const filtered = JSON.parse(savedFilteredResults);
+        setFilteredResults(filtered);
+        setIsFilterMode(true);
+        // Calculate correct slice for the saved page
+        const startIndex = (page - 1) * perPage;
+        const endIndex = startIndex + perPage;
+        setCarListings(filtered.slice(startIndex, endIndex));
+        if (savedCurrentFilters) {
+          setCurrentFilters(JSON.parse(savedCurrentFilters));
+        }
+      } else if (cachedResults) {
+        setCarListings(JSON.parse(cachedResults));
+      }
+      if (savedQuery) {
+        setCurrentQuery(savedQuery);
+      }
+    }
   }, []);
 
   // Save current query and pagination settings to localStorage
@@ -109,8 +205,11 @@ export default function CarSearchApp() {
     if (currentQuery) saveToLocalStorage("currentQuery", currentQuery);
     saveToLocalStorage("currentPage", currentPage);
     saveToLocalStorage("itemsPerPage", itemsPerPage);
-
-    // Only save pagination info if we have actual data
+    saveToLocalStorage("isFilterMode", isFilterMode);
+    if (isFilterMode) {
+      saveToLocalStorage("filteredResults", filteredResults);
+      saveToLocalStorage("currentFilters", currentFilters);
+    }
     if (totalPages > 0 && totalItems > 0) {
       saveToLocalStorage("paginationInfo", {
         currentPage,
@@ -126,6 +225,9 @@ export default function CarSearchApp() {
     totalPages,
     totalItems,
     saveToLocalStorage,
+    isFilterMode,
+    filteredResults,
+    currentFilters,
   ]);
 
   // Save sort option to localStorage
@@ -133,129 +235,19 @@ export default function CarSearchApp() {
     saveToLocalStorage("carSortOption", sortOption);
   }, [sortOption, saveToLocalStorage]);
 
-  // Helper function to update search history
-  const updateSearchHistory = useCallback(
-    (query) => {
-      // Create a new array to avoid direct state mutation
-      const newHistory = [
-        query,
-        ...searchHistory.filter((item) => item !== query),
-      ];
-
-      // Limit history to 10 items
-      const limitedHistory = newHistory.slice(0, 10);
-
-      // Update state and localStorage
-      setSearchHistory(limitedHistory);
-      saveToLocalStorage("searchHistory", limitedHistory);
-    },
-    [searchHistory, saveToLocalStorage]
-  );
-
-  // Function to fetch cars with pagination using Directus approach
-  const fetchCars = useCallback(
-    async (query, page, limit) => {
-      if (!query) return;
-
-      // Create a cache key based on the request parameters
-      const cacheKey = `cars_${query}_page${page}_limit${limit}`;
-
-      // Check if we have cached data
-      if (cookieUtils.canUseLocalStorage()) {
-        const cachedData = sessionStorage.getItem(cacheKey);
-        if (cachedData) {
-          const data = JSON.parse(cachedData);
-          setCarListings(data.cars);
-
-          if (data.pagination) {
-            setTotalPages(data.pagination.totalPages);
-            setTotalItems(data.pagination.totalItems);
-          }
-
-          return; // Return early, no need to fetch again
-        }
-      }
-
-      setLoading(true);
-
-      try {
-        const response = await fetch("/api/cars", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ query, page, limit }),
-        });
-
-        // Check if the response is ok before trying to parse JSON
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`API error (${response.status}):`, errorText);
-          throw new Error(
-            `API returned status ${response.status}: ${errorText}`
-          );
-        }
-
-        // Get response as text first for debugging
-        const responseText = await response.text();
-
-        // Make sure we have a valid JSON response
-        if (!responseText || responseText.trim() === "") {
-          console.error("API returned empty response");
-          throw new Error("Empty response from server");
-        }
-
-        // Try to parse the JSON
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error("Failed to parse JSON response:", parseError);
-          console.error("Response text:", responseText);
-          throw new Error("Invalid JSON response from server");
-        }
-
-        if (data.cars) {
-          // Save the response data
-          setCarListings(data.cars);
-          saveToLocalStorage("carSearchResults", data.cars);
-
-          // Update pagination info if available
-          if (data.pagination) {
-            const paginationInfo = data.pagination;
-            setTotalPages(paginationInfo.totalPages);
-            setTotalItems(paginationInfo.totalItems);
-            saveToLocalStorage("paginationInfo", paginationInfo);
-          }
-
-          // Update search history
-          updateSearchHistory(query);
-
-          // Cache the response data
-          if (cookieUtils.canUseLocalStorage()) {
-            sessionStorage.setItem(cacheKey, JSON.stringify(data));
-          }
-        } else {
-          // If we didn't get cars data but the request was successful
-          console.warn("API response missing cars data:", data);
-          setCarListings([]);
-        }
-      } catch (error) {
-        console.error("Error fetching cars:", error);
-        // Optionally show an error message to the user
-      } finally {
-        setLoading(false);
-      }
-    },
-    [saveToLocalStorage, updateSearchHistory]
-  );
-
   // Handle search
   const handleSearch = useCallback(
     async (query) => {
       setCurrentQuery(query);
-      setCurrentPage(1); // Reset to first page
-      fetchCars(query, 1, itemsPerPage);
+      setCurrentPage(1);
+      setError(null);
+      setIsFilterMode(false); // We'll set to true in fetchCars if needed
+      setFilteredResults([]);
+      setCurrentFilters(null);
+      // For AI queries, fetch all results and paginate in memory
+      setTimeout(() => {
+        fetchCars(query, 1, itemsPerPage, true);
+      }, 100);
     },
     [fetchCars, itemsPerPage]
   );
@@ -266,12 +258,29 @@ export default function CarSearchApp() {
       if (newPage === currentPage) return;
 
       setCurrentPage(newPage);
-      fetchCars(currentQuery, newPage, itemsPerPage);
+      setError(null);
 
-      // Scroll to top when changing pages
+      if (isFilterMode) {
+        // In filter mode, paginate the filtered results
+        const startIndex = (newPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const paginatedResults = filteredResults.slice(startIndex, endIndex);
+        setCarListings(paginatedResults);
+      } else {
+        // In search mode, fetch from API
+        fetchCars(currentQuery, newPage, itemsPerPage);
+      }
+
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
-    [currentPage, currentQuery, fetchCars, itemsPerPage]
+    [
+      currentPage,
+      currentQuery,
+      fetchCars,
+      itemsPerPage,
+      isFilterMode,
+      filteredResults,
+    ]
   );
 
   // Handle items per page change
@@ -280,25 +289,44 @@ export default function CarSearchApp() {
       if (newLimit === itemsPerPage) return;
 
       setItemsPerPage(newLimit);
-      setCurrentPage(1); // Reset to first page
+      setCurrentPage(1);
+      setError(null);
 
-      if (currentQuery) {
+      if (isFilterMode) {
+        // In filter mode, recalculate pagination for filtered results
+        const calculatedTotalPages =
+          Math.ceil(filteredResults.length / newLimit) || 1;
+        setTotalPages(calculatedTotalPages);
+        setTotalItems(filteredResults.length);
+
+        // Show first page of filtered results
+        const paginatedResults = filteredResults.slice(0, newLimit);
+        setCarListings(paginatedResults);
+      } else if (currentQuery) {
+        // In search mode, fetch from API
         fetchCars(currentQuery, 1, newLimit);
       }
     },
-    [currentQuery, fetchCars, itemsPerPage]
+    [currentQuery, fetchCars, itemsPerPage, isFilterMode, filteredResults]
   );
 
   // Handle filter-based search results
   const handleFilterResults = useCallback(
-    (results) => {
-      setCarListings(results);
+    (results, filters) => {
+      setFilteredResults(results);
       setCurrentPage(1);
+      setError(null);
+      setIsFilterMode(true); // Switch to filter mode
+      setCurrentFilters(filters); // Store the current filters
 
       const calculatedTotalPages =
         Math.ceil(results.length / itemsPerPage) || 1;
       setTotalPages(calculatedTotalPages);
       setTotalItems(results.length);
+
+      // Show first page of filtered results
+      const paginatedResults = results.slice(0, itemsPerPage);
+      setCarListings(paginatedResults);
 
       saveToLocalStorage("carSearchResults", results);
       saveToLocalStorage("paginationInfo", {
@@ -315,7 +343,7 @@ export default function CarSearchApp() {
   const sortedCarListings = useCallback(() => {
     if (!carListings.length) return [];
 
-    const carsToSort = [...carListings]; // Create a copy to avoid mutating the original array
+    const carsToSort = [...carListings];
 
     switch (sortOption) {
       case "price_asc":
@@ -331,7 +359,7 @@ export default function CarSearchApp() {
       case "horsepower_desc":
         return carsToSort.sort((a, b) => b.horsepower - a.horsepower);
       default:
-        return carsToSort; // Default sorting (no sorting)
+        return carsToSort;
     }
   }, [carListings, sortOption]);
 
@@ -349,6 +377,43 @@ export default function CarSearchApp() {
           loading={loading}
           initialValue={searchHistory.length > 0 ? searchHistory[0] : ""}
         />
+
+        {/* Error display */}
+        {error && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-red-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Error</h3>
+                <div className="mt-2 text-sm text-red-700">{error}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Diagnostic information (development only) */}
+        {process.env.NODE_ENV === "development" && (
+          <div className="mt-4">
+            <button
+              onClick={() => setShowDiagnostics(!showDiagnostics)}
+              className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+            >
+              {showDiagnostics ? "Hide" : "Show"} Diagnostics
+            </button>
+          </div>
+        )}
 
         {/* Items per page selector */}
         {carListings.length > 0 && (

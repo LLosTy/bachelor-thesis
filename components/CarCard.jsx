@@ -23,22 +23,46 @@ export const CarCard = ({ car, formatPrice, formatMileage }) => {
       return;
     }
 
+    // Try to get the image URL from the car data first
+    if (
+      car.images &&
+      typeof car.images === "object" &&
+      car.images.directus_files_id
+    ) {
+      const directusUrl =
+        process.env.NEXT_PUBLIC_DIRECTUS_URL || "http://localhost:8055";
+      setThumbnailUrl(`${directusUrl}/assets/${car.images.directus_files_id}`);
+      setIsLoading(false);
+      return;
+    }
+
+    // Fallback: try to fetch from Directus API
+    const directusUrl =
+      process.env.NEXT_PUBLIC_DIRECTUS_URL || "http://localhost:8055";
+
+    // Get the images ID from the car data
+    const imagesId = car.images?.id || car.images;
+
     fetch(
-      `http://localhost:8055/items/images_files?filter[images_id][_eq]=${car.images}&filter[sort][_eq]=1&fields=directus_files_id`
+      `${directusUrl}/items/images_files?filter[images_id][_eq]=${imagesId}&sort=sort&fields=directus_files_id&limit=1`
     )
       .then((response) => {
-        if (!response.ok)
-          throw new Error(`Failed to fetch: ${response.status}`);
+        if (!response.ok) {
+          console.warn(`Failed to fetch image: ${response.status}`);
+          return null;
+        }
         return response.json();
       })
       .then((data) => {
-        if (data.data && data.data.length > 0) {
+        if (data && data.data && data.data.length > 0) {
           setThumbnailUrl(
-            `http://localhost:8055/assets/${data.data[0].directus_files_id}`
+            `${directusUrl}/assets/${data.data[0].directus_files_id}`
           );
         }
       })
-      .catch((error) => console.error("Error:", error.message))
+      .catch((error) => {
+        console.warn("Error fetching image:", error.message);
+      })
       .finally(() => setIsLoading(false));
   }, [car.id, car.images]);
 
