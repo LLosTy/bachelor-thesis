@@ -10,6 +10,7 @@ import {
   Calendar,
   Gauge,
   Zap,
+  Leaf,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -68,6 +69,8 @@ export const CarListings = ({ cars, formatPrice, formatMileage }) => {
         return "Mileage: High to Low";
       case "horsepower_desc":
         return "Horsepower: High to Low";
+      case "fuel_economy_combined_asc":
+        return "Fuel economy: Low to High";
       case "none":
         return "Default";
       default:
@@ -137,6 +140,14 @@ export const CarListings = ({ cars, formatPrice, formatMileage }) => {
               <DropdownMenuItem onClick={() => handleSort("horsepower_desc")}>
                 <Zap className="mr-2 h-4 w-4" />
                 <span>Horsepower: High to Low</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                onClick={() => handleSort("fuel_economy_combined_asc")}
+              >
+                <Leaf className="mr-2 h-4 w-4" />
+                <span>Fuel economy: Low to High</span>
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>

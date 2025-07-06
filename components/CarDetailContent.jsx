@@ -348,56 +348,15 @@ export function CarDetailContent({
               {/* Additional Details */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Specifications</CardTitle>
+                  <CardTitle>Contact Us</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-6">
-                  <Table>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell className="text-muted-foreground">
-                          Make
-                        </TableCell>
-                        <TableCell className="font-medium text-right">
-                          {car.make}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="text-muted-foreground">
-                          Model
-                        </TableCell>
-                        <TableCell className="font-medium text-right">
-                          {car.model}
-                        </TableCell>
-                      </TableRow>
-                      {car.engine_specs && (
-                        <>
-                          <TableRow>
-                            <TableCell className="text-muted-foreground">
-                              Displacement
-                            </TableCell>
-                            <TableCell className="font-medium text-right">
-                              {car.engine_specs.displacement}cc
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell className="text-muted-foreground">
-                              Cylinders
-                            </TableCell>
-                            <TableCell className="font-medium text-right">
-                              {car.engine_specs.cylinders}
-                            </TableCell>
-                          </TableRow>
-                        </>
-                      )}
-                    </TableBody>
-                  </Table>
-
-                  <Separator />
+                  {/* <Separator /> */}
 
                   {/* CTA Buttons */}
                   <div className="space-y-3">
                     <Link href="/contact">
-                      <Button className="w-full" size="lg">
+                      <Button className="w-full mb-2" size="lg">
                         Contact Us
                       </Button>
                     </Link>

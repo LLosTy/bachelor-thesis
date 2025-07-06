@@ -88,7 +88,7 @@ export const CarCard = ({ car, formatPrice, formatMileage }) => {
           {car.year} {car.make} {car.model}
         </h3>
         <p className="text-sm text-muted-foreground">
-          {car.trim || car.body_type || "N/A"}
+          {car.engine_type} {car.trim || car.body_type || "N/A"}
         </p>
         <div className="mt-2 flex justify-between items-center">
           <span className="font-bold">{formatPrice(car.price)}</span>

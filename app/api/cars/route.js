@@ -62,18 +62,21 @@ export async function POST(request) {
     const page = Math.max(1, parseInt(body.page || 1, 10));
     const limit = Math.max(1, parseInt(body.limit || 3, 10));
 
+    const schemaString = JSON.stringify(schema, null, 2);
+
     let filter;
     try {
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "chatgpt-4o-latest",
         messages: [
           {
             role: "system",
             content: `You are a helpful assistant that converts natural language queries about cars into JSON filters.
                      Only use fields that exist in the schema provided below.
                      Use lowercase for make of car.
-                     For "affordable cars", return a filter for cars under $30,000.
-                     Only respond with the JSON filter object, nothing else. Also differentiate between types of cars.
+                     For "affordable cars", return a filter for cars under 500 000Czk.
+                     Also differentiate between types of cars.
+                     Respond with ONLY a valid JSON object, with no explanation, no markdown, and no code block. Just raw, parsable JSON.
                      For example: "fun" should be something with a little more performace or be with a body type that would allow a 
                      more sporty drive. "Economic" should be a car with good gas mileage.
                      Take into consideration that the data is for the european market in the czech republic.
@@ -82,9 +85,13 @@ export async function POST(request) {
                      Fields are fields in a table of a certain name.
                      Example format: {"price": {"_lte": 30000}}
                      {"engine_specs": {"horsepower": {"_gte": 200}}}
+                     Use slang brand names and **translate them** to official names:
+                      - "vw" → "volkswagen"  
+                      - "mercedes" → "mercedes-benz"  
+                      - "beemer", "bimmer", "bmw" → "bmw"  
 
                      Available schema:
-                     ${JSON.stringify(schema, null, 2)}
+                     ${schemaString}
 
                      Available operators:
                      _eq: Equal

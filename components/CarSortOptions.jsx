@@ -12,6 +12,7 @@ export const CarSortOptions = ({ onSort }) => {
     { value: "mileage_asc", label: "Lowest mileage" },
     { value: "mileage_desc", label: "Highest mileage" },
     { value: "horsepower_desc", label: "Highest HP" },
+    { value: "fuel_economy_combined_asc", label: "Fuel economy: Low to High" },
   ];
 
   const handleSortChange = (e) => {
