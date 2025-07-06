@@ -71,6 +71,12 @@ export function CarDetailContent({
     );
   };
 
+  const subject = encodeURIComponent(`Inquiry about ${carName}`);
+  const linkUrl = process.env.NEXT_PUBLIC_URL;
+  const body = encodeURIComponent(
+    `Hello,\nI'm interested in the ${carName} listed for ${formattedPrice} at: ${linkUrl}/${car.id}`
+  );
+
   const handleCall = () => {
     window.location.href = "tel:+1234567890"; // Replace with actual phone number
   };
@@ -388,11 +394,14 @@ export function CarDetailContent({
 
                   {/* CTA Buttons */}
                   <div className="space-y-3">
-                    <Link href="/contact">
+                    <a
+                      href={`mailto:contact.us@carapp.com?subject=${subject}&body=${body}`}
+                    >
                       <Button className="w-full mb-2" size="lg">
                         Contact Us
                       </Button>
-                    </Link>
+                    </a>
+
                     <Button
                       variant="outline"
                       className="w-full"
