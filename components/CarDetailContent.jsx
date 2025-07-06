@@ -11,7 +11,7 @@ import {
   Zap,
   Package,
   Clock,
-  Shield,
+  Cog,
   Calendar,
   Gauge,
   Fuel,
@@ -274,7 +274,7 @@ export function CarDetailContent({
                 </TabsContent>
                 <TabsContent value="specifications" className="mt-6">
                   <div className="space-y-4">
-                    {car.engine_specs && (
+                    {car.engine_specs && car.engine_type !== "electric" && (
                       <>
                         <Card>
                           <CardContent className="p-4">
@@ -286,7 +286,8 @@ export function CarDetailContent({
                                 <h3 className="font-medium">Engine</h3>
                                 <p className="text-sm text-muted-foreground">
                                   {car.engine_specs.displacement}cc,{" "}
-                                  {car.engine_specs.cylinders} cylinders
+                                  {car.engine_specs.cylinders} cylinders,{" "}
+                                  {car.engine_type}
                                 </p>
                               </div>
                             </div>
@@ -296,12 +297,29 @@ export function CarDetailContent({
                           <CardContent className="p-4">
                             <div className="flex items-start gap-3">
                               <div className="bg-primary/10 p-2 rounded-full">
-                                <Zap className="h-5 w-5 text-primary" />
+                                <Cog className="h-5 w-5 text-primary" />
                               </div>
                               <div>
-                                <h3 className="font-medium">Performance</h3>
+                                <h3 className="font-medium">Transmission</h3>
                                 <p className="text-sm text-muted-foreground">
-                                  {car.engine_specs.horsepower} horsepower
+                                  {car.engine_specs.transmission}
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="bg-primary/10 p-2 rounded-full">
+                                <Cog className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <h3 className="font-medium">
+                                  Fuel Consumption
+                                </h3>
+                                <p className="text-sm text-muted-foreground">
+                                  {car.engine_specs.fuel_consumption}l / 100kms
                                 </p>
                               </div>
                             </div>
@@ -309,6 +327,21 @@ export function CarDetailContent({
                         </Card>
                       </>
                     )}
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="bg-primary/10 p-2 rounded-full">
+                            <Zap className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-medium">Performance</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {car.engine_specs.horsepower} horsepower
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                     <Card>
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
