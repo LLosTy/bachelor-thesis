@@ -8,6 +8,24 @@ import { PaginationControls } from "@/components/PaginationControls";
 import { formatters } from "@/utils/formatters";
 import { cookieUtils } from "@/utils/cookieUtils";
 import CarFilter from "@/components/CarFilter";
+import {
+  ArrowDownNarrowWide,
+  DollarSign,
+  Calendar,
+  Gauge,
+  Zap,
+  Leaf,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function CarSearchApp() {
   const [carListings, setCarListings] = useState([]);
@@ -15,7 +33,6 @@ export default function CarSearchApp() {
   const [error, setError] = useState(null);
   const [searchHistory, setSearchHistory] = useState([]);
   const [sortOption, setSortOption] = useState("none");
-  const [showDiagnostics, setShowDiagnostics] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -339,12 +356,34 @@ export default function CarSearchApp() {
     [itemsPerPage, saveToLocalStorage]
   );
 
-  // Sort cars based on the selected option
-  const sortedCarListings = useCallback(() => {
-    if (!carListings.length) return [];
+  // Helper to get sort option text
+  const getSortOptionText = () => {
+    switch (sortOption) {
+      case "price_asc":
+        return "Price: Low to High";
+      case "price_desc":
+        return "Price: High to Low";
+      case "year_desc":
+        return "Newest First";
+      case "mileage_asc":
+        return "Mileage: Low to High";
+      case "mileage_desc":
+        return "Mileage: High to Low";
+      case "horsepower_desc":
+        return "Horsepower: High to Low";
+      case "fuel_economy_combined_asc":
+        return "Fuel economy: Low to High";
+      case "none":
+        return "Default";
+      default:
+        return "Sort by";
+    }
+  };
 
-    const carsToSort = [...carListings];
-
+  // Sorting function
+  const sortCars = (cars, sortOption) => {
+    if (!cars || !cars.length) return [];
+    const carsToSort = [...cars];
     switch (sortOption) {
       case "price_asc":
         return carsToSort.sort((a, b) => a.price - b.price);
@@ -358,15 +397,27 @@ export default function CarSearchApp() {
         return carsToSort.sort((a, b) => b.mileage - a.mileage);
       case "horsepower_desc":
         return carsToSort.sort((a, b) => b.horsepower - a.horsepower);
+      case "fuel_economy_combined_asc":
+        return carsToSort.sort((a, b) => {
+          const aVal = a.engine_specs?.fuel_consumption ?? Infinity;
+          const bVal = b.engine_specs?.fuel_consumption ?? Infinity;
+          return aVal - bVal;
+        });
       default:
         return carsToSort;
     }
-  }, [carListings, sortOption]);
+  };
 
-  // Handle sort option change
-  const handleSort = useCallback((option) => {
-    setSortOption(option);
-  }, []);
+  // Compute the full sorted list (either filtered or from API)
+  const fullSortedCars = isFilterMode
+    ? sortCars(filteredResults, sortOption)
+    : sortCars(carListings, sortOption);
+
+  // Paginate the sorted list
+  const paginatedSortedCars = fullSortedCars.slice(
+    (currentPage - 1) * itemsPerPage,
+    (currentPage - 1) * itemsPerPage + itemsPerPage
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 py-8">
@@ -403,54 +454,122 @@ export default function CarSearchApp() {
           </div>
         )}
 
-        {/* Diagnostic information (development only) */}
-        {process.env.NODE_ENV === "development" && (
-          <div className="mt-4">
-            <button
-              onClick={() => setShowDiagnostics(!showDiagnostics)}
-              className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-            >
-              {showDiagnostics ? "Hide" : "Show"} Diagnostics
-            </button>
-          </div>
-        )}
-
-        {/* Items per page selector */}
-        {carListings.length > 0 && (
-          <div className="mt-4 flex justify-end">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Items per page:</span>
-              <select
-                value={itemsPerPage}
-                onChange={(e) => {
-                  const newLimit = parseInt(e.target.value, 10);
-                  handleItemsPerPageChange(newLimit);
-                }}
-                className="h-8 py-0 rounded-md border-gray-300 focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-              >
-                <option value="3">3</option>
-                <option value="6">6</option>
-                <option value="12">12</option>
-                <option value="24">24</option>
-              </select>
+        {/* Items per page selector and sorting dropdown */}
+        {fullSortedCars.length > 0 && (
+          <>
+            {/* Sorting dropdown above */}
+            <div className="mt-4 flex justify-end">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-[240px] justify-between"
+                  >
+                    {getSortOptionText()}
+                    <ArrowDownNarrowWide className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-[240px]">
+                  <DropdownMenuLabel>Sort Options</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem onClick={() => setSortOption("none")}>
+                      Default
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setSortOption("price_asc")}
+                    >
+                      {" "}
+                      <DollarSign className="mr-2 h-4 w-4" />{" "}
+                      <span>Price: Low to High</span>{" "}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setSortOption("price_desc")}
+                    >
+                      {" "}
+                      <DollarSign className="mr-2 h-4 w-4" />{" "}
+                      <span>Price: High to Low</span>{" "}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setSortOption("year_desc")}
+                    >
+                      {" "}
+                      <Calendar className="mr-2 h-4 w-4" />{" "}
+                      <span>Newest First</span>{" "}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setSortOption("mileage_asc")}
+                    >
+                      {" "}
+                      <Gauge className="mr-2 h-4 w-4" />{" "}
+                      <span>Mileage: Low to High</span>{" "}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setSortOption("mileage_desc")}
+                    >
+                      {" "}
+                      <Gauge className="mr-2 h-4 w-4" />{" "}
+                      <span>Mileage: High to Low</span>{" "}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setSortOption("horsepower_desc")}
+                    >
+                      {" "}
+                      <Zap className="mr-2 h-4 w-4" />{" "}
+                      <span>Horsepower: High to Low</span>{" "}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setSortOption("fuel_economy_combined_asc")}
+                    >
+                      {" "}
+                      <Leaf className="mr-2 h-4 w-4" />{" "}
+                      <span>Fuel economy: Low to High</span>{" "}
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-          </div>
+            {/* Items per page selector below */}
+            <div className="mt-2 flex justify-end">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600">Items per page:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    const newLimit = parseInt(e.target.value, 10);
+                    handleItemsPerPageChange(newLimit);
+                  }}
+                  className="h-8 py-0 rounded-md border-gray-300 focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                >
+                  <option value="3">3</option>
+                  <option value="6">6</option>
+                  <option value="12">12</option>
+                  <option value="24">24</option>
+                </select>
+              </div>
+            </div>
+          </>
         )}
 
         {/* Results display with sorting */}
         <div className="mt-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <CarListings
-            cars={sortedCarListings()}
+            cars={paginatedSortedCars}
             formatPrice={formatters.formatPrice}
             formatMileage={formatters.formatMileage}
           />
 
           {/* Pagination controls */}
-          {carListings.length > 0 && (
+          {fullSortedCars.length > 0 && (
             <div className="mt-8">
               <div className="text-center mb-2 text-sm text-gray-600">
-                Showing {Math.min(itemsPerPage, carListings.length)} of{" "}
-                {totalItems} cars • Page {currentPage} of {totalPages}
+                Showing {paginatedSortedCars.length} of {totalItems} cars • Page{" "}
+                {currentPage} of {totalPages}
               </div>
               <PaginationControls
                 currentPage={currentPage}
