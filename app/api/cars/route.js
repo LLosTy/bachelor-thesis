@@ -41,6 +41,205 @@ async function checkDirectusConnection() {
   }
 }
 
+// Helper function to parse and normalize the filter from OpenAI response
+function parseAndNormalizeFilter(responseContent) {
+  let filter = JSON.parse(responseContent);
+
+  // If the filter is an array, convert it to an _and filter
+  if (Array.isArray(filter)) {
+    filter = { _and: filter };
+  }
+
+  // If the filter is empty or only contains empty objects, use undefined to show all cars
+  if (
+    !filter ||
+    Object.keys(filter).length === 0 ||
+    (typeof filter === "object" &&
+      Object.values(filter).every(
+        (v) => !v || (typeof v === "object" && Object.keys(v).length === 0)
+      ))
+  ) {
+    filter = undefined;
+  }
+
+  return filter;
+}
+
+// Helper function to validate the filter to ensure it only uses valid fields
+function validateFilter(filter) {
+  const validFields = [
+    "make",
+    "model",
+    "year",
+    "body_type",
+    "mileage",
+    "price",
+    "engine_type",
+    "engine_specs",
+    "features",
+    "images",
+    "user_created",
+    "date_created",
+    "user_updated",
+    "date_updated",
+  ];
+
+  const validOperators = [
+    "_eq",
+    "_neq",
+    "_lt",
+    "_lte",
+    "_gt",
+    "_gte",
+    "_in",
+    "_contains",
+    "_and",
+    "_or",
+    "_not",
+  ];
+
+  const _validate = (obj, parentKey = null) => {
+    // Skip validation for arrays - they contain values, not field names
+    if (Array.isArray(obj)) {
+      return;
+    }
+
+    for (const key in obj) {
+      // If we're inside the "features" object, skip field name validation for its children
+      if (parentKey === "features") {
+        // But still validate recursively in case of nested operators
+        if (typeof obj[key] === "object" && obj[key] !== null) {
+          _validate(obj[key], parentKey);
+        }
+        continue;
+      }
+
+      // Check if it's a valid field or operator
+      if (!validFields.includes(key) && !validOperators.includes(key)) {
+        console.error(`Invalid field in filter: ${key}`);
+        throw new Error(`Invalid field: ${key}`);
+      }
+      if (typeof obj[key] === "object" && obj[key] !== null) {
+        _validate(obj[key], key);
+      }
+    }
+  };
+
+  _validate(filter);
+}
+
+// Helper to get total count for pagination
+async function getTotalCount(filter) {
+  const totalCountResult = await directus.request(
+    aggregate("car_listings", {
+      aggregate: { count: "*" },
+      ...(filter && Object.keys(filter).length > 0 ? { filter } : {}),
+    })
+  );
+  return totalCountResult[0]?.count || 0;
+}
+
+// Helper to get matching car IDs for features filter
+async function getMatchingCarIdsForFeatures(featuresFilter) {
+  const matchingFeatures = await directus.request(
+    readItems("features", {
+      fields: ["car_listings_id"],
+      filter: featuresFilter,
+      limit: -1,
+    })
+  );
+  return matchingFeatures
+    .map((item) => item.car_listings_id)
+    .flat()
+    .filter(Boolean);
+}
+
+// Helper to build the final filter, handling features sub-query
+async function buildFinalFilter(filter) {
+  if (filter && filter.features) {
+    try {
+      const featuresFilter = filter.features;
+      delete filter.features;
+      const matchingCarIds = await getMatchingCarIdsForFeatures(featuresFilter);
+      if (matchingCarIds.length > 0) {
+        if (Object.keys(filter).length > 0) {
+          return { _and: [filter, { id: { _in: matchingCarIds } }] };
+        } else {
+          return { id: { _in: matchingCarIds } };
+        }
+      } else {
+        return { id: { _eq: "non_existent_id_for_features" } };
+      }
+    } catch (error) {
+      console.error("Error in features sub-query:", error);
+      return { id: { _eq: "error_blocking_id_features" } };
+    }
+  }
+  return filter;
+}
+
+// Helper to get paginated cars
+async function getPaginatedCars(finalFilter, limit, safePage) {
+  return directus.request(
+    readItems("car_listings", {
+      fields: ["*", { engine_specs: ["*"] }, { images: ["*"] }],
+      ...(finalFilter && Object.keys(finalFilter).length > 0
+        ? { filter: finalFilter }
+        : {}),
+      limit: limit,
+      page: safePage,
+    })
+  );
+}
+
+// Helper to process car data (e.g., add horsepower)
+function processCars(cars) {
+  return cars.map((car) => ({
+    ...car,
+    horsepower: car.engine_specs?.horsepower || "N/A",
+  }));
+}
+
+// Helper to format pagination object
+function formatPagination(currentPage, totalPages, totalItems, limit) {
+  return {
+    currentPage,
+    totalPages,
+    totalItems,
+    limit,
+  };
+}
+
+// Helper to handle Directus errors
+function handleDirectusError(directusError, page, limit) {
+  let errorMessage = "Database connection error";
+  let statusCode = 500;
+
+  if (directusError.message?.includes("ECONNREFUSED")) {
+    errorMessage = "Database server is not responding";
+    statusCode = 503;
+  } else if (directusError.message?.includes("401")) {
+    errorMessage = "Database authentication failed";
+    statusCode = 401;
+  } else if (directusError.message?.includes("403")) {
+    errorMessage = "Database access denied";
+    statusCode = 403;
+  } else if (directusError.message?.includes("404")) {
+    errorMessage = "Database resource not found";
+    statusCode = 404;
+  }
+
+  return NextResponse.json(
+    {
+      error: errorMessage,
+      details: directusError.message,
+      cars: [],
+      pagination: formatPagination(page, 1, 0, limit),
+    },
+    { status: statusCode }
+  );
+}
+
 export async function POST(request) {
   if (!schema) {
     return NextResponse.json(
@@ -130,6 +329,8 @@ export async function POST(request) {
                       - "mercedes" → "mercedes-benz"  
                       - "beemer", "bimmer", "bmw" → "bmw"  
 
+                      Car features are available in collection features, make sure to take note of this
+
                      Available schema:
                      ${schemaString}
 
@@ -148,78 +349,8 @@ export async function POST(request) {
       });
 
       const responseContent = completion.choices[0].message.content;
-
       try {
-        filter = JSON.parse(responseContent);
-
-        // If the filter is an array, convert it to an _and filter
-        if (Array.isArray(filter)) {
-          filter = { _and: filter };
-        }
-
-        // If the filter is empty or only contains empty objects, use undefined to show all cars
-        if (
-          !filter ||
-          Object.keys(filter).length === 0 ||
-          (typeof filter === "object" &&
-            Object.values(filter).every(
-              (v) =>
-                !v || (typeof v === "object" && Object.keys(v).length === 0)
-            ))
-        ) {
-          filter = undefined;
-        }
-
-        // Validate the filter to ensure it only uses valid fields
-        const validFields = [
-          "make",
-          "model",
-          "year",
-          "body_type",
-          "mileage",
-          "price",
-          "engine_type",
-          "engine_specs",
-          "features",
-          "images",
-          "user_created",
-          "date_created",
-          "user_updated",
-          "date_updated",
-        ];
-
-        const validOperators = [
-          "_eq",
-          "_neq",
-          "_lt",
-          "_lte",
-          "_gt",
-          "_gte",
-          "_in",
-          "_contains",
-          "_and",
-          "_or",
-          "_not",
-        ];
-
-        const validateFilter = (obj) => {
-          // Skip validation for arrays - they contain values, not field names
-          if (Array.isArray(obj)) {
-            return;
-          }
-
-          for (const key in obj) {
-            // Check if it's a valid field or operator
-            if (!validFields.includes(key) && !validOperators.includes(key)) {
-              console.error(`Invalid field in filter: ${key}`);
-              throw new Error(`Invalid field: ${key}`);
-            }
-            if (typeof obj[key] === "object" && obj[key] !== null) {
-              validateFilter(obj[key]);
-            }
-          }
-        };
-
+        filter = parseAndNormalizeFilter(responseContent);
         validateFilter(filter);
       } catch (filterParseError) {
         console.error(
@@ -258,12 +389,7 @@ export async function POST(request) {
           message:
             "Please check your Directus configuration and try again later.",
           cars: [],
-          pagination: {
-            currentPage: page,
-            totalPages: 1,
-            totalItems: 0,
-            limit,
-          },
+          pagination: formatPagination(page, 1, 0, limit),
         },
         { status: 503 }
       );
@@ -271,123 +397,30 @@ export async function POST(request) {
 
     try {
       // Get total count for pagination
-      const totalCountResult = await directus.request(
-        aggregate("car_listings", {
-          aggregate: { count: "*" },
-          ...(filter && Object.keys(filter).length > 0 ? { filter } : {}),
-        })
-      );
-
-      const totalItems = totalCountResult[0]?.count || 0;
+      const totalItems = await getTotalCount(filter);
       const totalPages = Math.max(1, Math.ceil(totalItems / limit));
-
-      // Clamp the requested page to the last valid page
+      // Ensure that the requested page number for pagination is always within valid bounds
       const safePage = Math.min(Math.max(1, page), totalPages);
 
-      // Handle features filtering if present
-      let finalFilter = filter;
-      if (filter && filter.features) {
-        try {
-          // Extract features filter conditions
-          const featuresFilter = filter.features;
-          delete filter.features; // Remove from main filter
-
-          // Find cars that have features matching the criteria
-          const matchingFeatures = await directus.request(
-            readItems("features", {
-              fields: ["car_listings_id"],
-              filter: featuresFilter,
-              limit: -1,
-            })
-          );
-
-          const matchingCarIds = matchingFeatures
-            .map((item) => item.car_listings_id)
-            .flat()
-            .filter(Boolean);
-
-          if (matchingCarIds.length > 0) {
-            // Add car ID filter to main filter
-            if (Object.keys(filter).length > 0) {
-              finalFilter = { _and: [filter, { id: { _in: matchingCarIds } }] };
-            } else {
-              finalFilter = { id: { _in: matchingCarIds } };
-            }
-          } else {
-            // No cars match the features criteria
-            finalFilter = { id: { _eq: "non_existent_id_for_features" } };
-          }
-        } catch (error) {
-          console.error("Error in features sub-query:", error);
-          finalFilter = { id: { _eq: "error_blocking_id_features" } };
-        }
-      }
+      // Build the final filter, handling features if present
+      const finalFilter = await buildFinalFilter(filter);
 
       // Get paginated data for the safe page
-      const cars = await directus.request(
-        readItems("car_listings", {
-          fields: ["*", { engine_specs: ["*"] }, { images: ["*"] }],
-          ...(finalFilter && Object.keys(finalFilter).length > 0
-            ? { filter: finalFilter }
-            : {}),
-          limit: limit,
-          page: safePage,
-        })
-      );
+      const cars = await getPaginatedCars(finalFilter, limit, safePage);
 
       // Process the data to include horsepower directly
-      const processedCars = cars.map((car) => ({
-        ...car,
-        horsepower: car.engine_specs?.horsepower || "N/A",
-      }));
+      const processedCars = processCars(cars);
 
       // Create the final response
       const finalResponse = {
         cars: processedCars,
-        pagination: {
-          currentPage: safePage,
-          totalPages,
-          totalItems,
-          limit,
-        },
+        pagination: formatPagination(safePage, totalPages, totalItems, limit),
       };
 
       return NextResponse.json(finalResponse);
     } catch (directusError) {
       console.error("Directus API error:", directusError);
-
-      // Provide more specific error messages based on the error type
-      let errorMessage = "Database connection error";
-      let statusCode = 500;
-
-      if (directusError.message?.includes("ECONNREFUSED")) {
-        errorMessage = "Database server is not responding";
-        statusCode = 503;
-      } else if (directusError.message?.includes("401")) {
-        errorMessage = "Database authentication failed";
-        statusCode = 401;
-      } else if (directusError.message?.includes("403")) {
-        errorMessage = "Database access denied";
-        statusCode = 403;
-      } else if (directusError.message?.includes("404")) {
-        errorMessage = "Database resource not found";
-        statusCode = 404;
-      }
-
-      return NextResponse.json(
-        {
-          error: errorMessage,
-          details: directusError.message,
-          cars: [],
-          pagination: {
-            currentPage: page,
-            totalPages: 1,
-            totalItems: 0,
-            limit,
-          },
-        },
-        { status: statusCode }
-      );
+      return handleDirectusError(directusError, page, limit);
     }
   } catch (error) {
     console.error("Unexpected error in API:", error);
