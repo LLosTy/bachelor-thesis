@@ -1,27 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
 import { CarCard } from "./CarCard";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  ArrowDownNarrowWide,
-  Info,
-  DollarSign,
-  Calendar,
-  Gauge,
-  Zap,
-  Leaf,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Info } from "lucide-react";
 
 export const CarListings = ({ cars, formatPrice, formatMileage }) => {
   if (!cars.length) {

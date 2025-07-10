@@ -258,10 +258,9 @@ export default function CarSearchApp() {
       setCurrentQuery(query);
       setCurrentPage(1);
       setError(null);
-      setIsFilterMode(false); // We'll set to true in fetchCars if needed
+      setIsFilterMode(false);
       setFilteredResults([]);
       setCurrentFilters(null);
-      // For AI queries, fetch all results and paginate in memory
       setTimeout(() => {
         fetchCars(query, 1, itemsPerPage, true);
       }, 100);
@@ -456,104 +455,13 @@ export default function CarSearchApp() {
 
         {/* Items per page selector and sorting dropdown */}
         {fullSortedCars.length > 0 && (
-          <>
-            {/* Sorting dropdown above */}
-            <div className="mt-4 flex justify-end">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-[240px] justify-between"
-                  >
-                    {getSortOptionText()}
-                    <ArrowDownNarrowWide className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-[240px]">
-                  <DropdownMenuLabel>Sort Options</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem onClick={() => setSortOption("none")}>
-                      Default
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => setSortOption("price_asc")}
-                    >
-                      {" "}
-                      <DollarSign className="mr-2 h-4 w-4" />{" "}
-                      <span>Price: Low to High</span>{" "}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setSortOption("price_desc")}
-                    >
-                      {" "}
-                      <DollarSign className="mr-2 h-4 w-4" />{" "}
-                      <span>Price: High to Low</span>{" "}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => setSortOption("year_desc")}
-                    >
-                      {" "}
-                      <Calendar className="mr-2 h-4 w-4" />{" "}
-                      <span>Newest First</span>{" "}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => setSortOption("mileage_asc")}
-                    >
-                      {" "}
-                      <Gauge className="mr-2 h-4 w-4" />{" "}
-                      <span>Mileage: Low to High</span>{" "}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setSortOption("mileage_desc")}
-                    >
-                      {" "}
-                      <Gauge className="mr-2 h-4 w-4" />{" "}
-                      <span>Mileage: High to Low</span>{" "}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => setSortOption("horsepower_desc")}
-                    >
-                      {" "}
-                      <Zap className="mr-2 h-4 w-4" />{" "}
-                      <span>Horsepower: High to Low</span>{" "}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => setSortOption("fuel_economy_combined_asc")}
-                    >
-                      {" "}
-                      <Leaf className="mr-2 h-4 w-4" />{" "}
-                      <span>Fuel economy: Low to High</span>{" "}
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            {/* Items per page selector below */}
-            <div className="mt-2 flex justify-end">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">Items per page:</span>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => {
-                    const newLimit = parseInt(e.target.value, 10);
-                    handleItemsPerPageChange(newLimit);
-                  }}
-                  className="h-8 py-0 rounded-md border-gray-300 focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                >
-                  <option value="3">3</option>
-                  <option value="6">6</option>
-                  <option value="12">12</option>
-                  <option value="24">24</option>
-                </select>
-              </div>
-            </div>
-          </>
+          <CarSortAndPaginationControls
+            sortOption={sortOption}
+            setSortOption={setSortOption}
+            getSortOptionText={getSortOptionText}
+            itemsPerPage={itemsPerPage}
+            handleItemsPerPageChange={handleItemsPerPageChange}
+          />
         )}
 
         {/* Results display with sorting */}
@@ -584,5 +492,100 @@ export default function CarSearchApp() {
         <CarFilter onFilterResults={handleFilterResults} />
       </div>
     </div>
+  );
+}
+
+function CarSortAndPaginationControls({
+  sortOption,
+  setSortOption,
+  getSortOptionText,
+  itemsPerPage,
+  handleItemsPerPageChange,
+}) {
+  return (
+    <>
+      {/* Sorting dropdown above */}
+      <div className="mt-4 flex justify-end">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="w-[240px] justify-between">
+              {getSortOptionText()}
+              <ArrowDownNarrowWide className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-[240px]">
+            <DropdownMenuLabel>Sort Options</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem onClick={() => setSortOption("none")}>
+                Default
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setSortOption("price_asc")}>
+                {" "}
+                <DollarSign className="mr-2 h-4 w-4" />{" "}
+                <span>Price: Low to High</span>{" "}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortOption("price_desc")}>
+                {" "}
+                <DollarSign className="mr-2 h-4 w-4" />{" "}
+                <span>Price: High to Low</span>{" "}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setSortOption("year_desc")}>
+                {" "}
+                <Calendar className="mr-2 h-4 w-4" /> <span>Newest First</span>{" "}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setSortOption("mileage_asc")}>
+                {" "}
+                <Gauge className="mr-2 h-4 w-4" />{" "}
+                <span>Mileage: Low to High</span>{" "}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortOption("mileage_desc")}>
+                {" "}
+                <Gauge className="mr-2 h-4 w-4" />{" "}
+                <span>Mileage: High to Low</span>{" "}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setSortOption("horsepower_desc")}
+              >
+                {" "}
+                <Zap className="mr-2 h-4 w-4" />{" "}
+                <span>Horsepower: High to Low</span>{" "}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setSortOption("fuel_economy_combined_asc")}
+              >
+                {" "}
+                <Leaf className="mr-2 h-4 w-4" />{" "}
+                <span>Fuel economy: Low to High</span>{" "}
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      {/* Items per page selector below */}
+      <div className="mt-2 flex justify-end">
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-gray-600">Items per page:</span>
+          <select
+            value={itemsPerPage}
+            onChange={(e) => {
+              const newLimit = parseInt(e.target.value, 10);
+              handleItemsPerPageChange(newLimit);
+            }}
+            className="h-8 py-0 rounded-md border-gray-300 focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+          >
+            <option value="3">3</option>
+            <option value="6">6</option>
+            <option value="12">12</option>
+            <option value="24">24</option>
+          </select>
+        </div>
+      </div>
+    </>
   );
 }

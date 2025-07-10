@@ -78,6 +78,7 @@ function validateFilter(filter) {
     "engine_specs",
     "features",
     "images",
+    "horsepower",
     "user_created",
     "date_created",
     "user_updated",
