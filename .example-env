@@ -1,2 +1,8 @@
-NEXT_PUBLIC_OPENAI_API_KEY="<YOUR-OPENAI-API-KEY-HERE>"
-NEXT_PUBLIC_DIRECTUS_URL="<YOUR-DIRECTUS-URL-HERE>"
+# .env.example for Car Listings Search App
+#
+# Copy this file to .env.local and fill in your values
+
+NEXT_PUBLIC_OPENAI_API_KEY="<YOUR-OPENAI-API-KEY-HERE>" # OpenAI API key for natural language search
+NEXT_PUBLIC_DIRECTUS_URL="<YOUR-DIRECTUS-URL-HERE>"      # Base URL of your Directus backend (e.g., http://localhost:8055)
+NEXT_PUBLIC_URL="<YOUR-PUBLIC-URL-HERE>"                 # Public URL of this app (used in car detail contact links)
+NEXT_PUBLIC_DIRECTUS_TOKEN="<OPTIONAL-DIRECTUS-TOKEN>"   # (Optional) Directus static API token for authenticated requests

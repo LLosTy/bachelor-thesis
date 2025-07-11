@@ -121,6 +121,16 @@
         "examples": [3],
         "source": "database-values"
       },
+      "fuel_consumption": {
+        "type": "float",
+        "examples": [3],
+        "source": "database-values"
+      },
+      "transmission": {
+        "type": "string",
+        "examples": [3],
+        "source": "database-values"
+      },
       "car_listings_id": {
         "type": "relation-o2m",
         "examples": ["7f6a45a2-5d78-4286-bb72-a694ab23085b"],

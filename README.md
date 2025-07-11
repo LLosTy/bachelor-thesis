@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Marketplace portal with AI powered natural language search
+
+This thesis is available at https://github.com/LLosTy/bachelor-thesis
+
+This thesis explores the development of a car listing platform that enhances user experience through Next.js 15, Shadcn components, Directus backend, and AI-driven search functionality.
+
+This project is a modern car search and listings web application built with [Next.js](https://nextjs.org), featuring:
+
+- **Natural language car search** powered by OpenAI (GPT) for intuitive queries (e.g., "I need a fuel-efficient family car with enough space for weekend trips").
+- **Advanced filtering and sorting** for car listings (make, model, price, year, body type, etc.).
+- **Rich car detail pages** with images, specs, and contact options.
+- **Data powered by [Directus](https://directus.io/)** as a headless CMS/database.
+- **Modern UI** using shadcn/ui, Tailwind CSS, and Radix UI components.
 
 ## Getting Started
 
-First, run the development server:
+### 1. Install dependencies
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install # or yarn install or pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Configure environment variables
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+Copy the example file and fill in your values:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cp .example-env .env.local
+```
+
+Edit `.env.local` and set:
+
+- `NEXT_PUBLIC_OPENAI_API_KEY` – Your OpenAI API key (for natural language search)
+- `NEXT_PUBLIC_DIRECTUS_URL` – The base URL of your Directus instance (e.g., `http://localhost:8055`)
+- `NEXT_PUBLIC_URL` – The public URL where your app is hosted (used for links in emails, etc.)
+- `NEXT_PUBLIC_DIRECTUS_TOKEN` _(optional)_ – Static Directus API token for authenticated requests (otherwise public access is used)
+
+### 3. Run the development server
+
+```bash
+yarn dev # or npm run dev or pnpm dev or bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser to see the app.
+
+## Environment Variables
+
+| Variable                   | Required | Description                                                     |
+| -------------------------- | -------- | --------------------------------------------------------------- |
+| NEXT_PUBLIC_OPENAI_API_KEY | Yes      | OpenAI API key for natural language search                      |
+| NEXT_PUBLIC_DIRECTUS_URL   | Yes      | URL of your Directus backend (e.g., http://localhost:8055)      |
+| NEXT_PUBLIC_URL            | Yes      | Public URL of this app (used in car detail contact links)       |
+| NEXT_PUBLIC_DIRECTUS_TOKEN | No       | Directus static API token for authenticated requests (optional) |
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Directus Documentation](https://docs.directus.io/)
+- [OpenAI API Docs](https://platform.openai.com/docs/api-reference)
+- [shadcn/ui](https://ui.shadcn.com/)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+You can deploy this app to [Vercel](https://vercel.com/) or any platform that supports Next.js. Make sure to set the required environment variables in your deployment settings.
