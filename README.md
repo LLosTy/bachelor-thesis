@@ -35,7 +35,13 @@ Edit `.env.local` and set:
 - `NEXT_PUBLIC_URL` – The public URL where your app is hosted (used for links in emails, etc.)
 - `NEXT_PUBLIC_DIRECTUS_TOKEN` _(optional)_ – Static Directus API token for authenticated requests (otherwise public access is used)
 
-### 3. Run the development server
+### 3. Set up Directus
+
+Directus files are in the directus directory
+
+Run Directus using docker and docker-compose.yml
+
+### 4. Run the development server
 
 ```bash
 yarn dev # or npm run dev or pnpm dev or bun dev
